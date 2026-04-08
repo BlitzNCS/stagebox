@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>StageCue Config</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#0a0a0a;color:#e0e0e0;font-family:-apple-system,system-ui,sans-serif;padding:20px;max-width:600px;margin:0 auto}
+  h1{font-size:22px;font-weight:700;color:#fff;margin-bottom:4px}
+  .subtitle{font-size:13px;color:#666;margin-bottom:16px}
+  .board-bar{display:flex;gap:8px;align-items:center;margin-bottom:20px;flex-wrap:wrap}
+  .board-bar select{flex:1;min-width:150px;padding:10px 14px;background:#161616;border:1px solid #333;border-radius:8px;color:#fff;font-size:15px;outline:none}
+  .board-bar select option{background:#161616;color:#fff}
+  .board-actions{display:flex;gap:6px}
+  .btn{padding:8px 14px;border:1px solid #333;border-radius:8px;background:#1a1a1a;color:#ccc;font-size:13px;cursor:pointer;white-space:nowrap}
+  .btn:active{background:#333}
+  .btn-sm{padding:6px 10px;font-size:12px}
+  .btn-green{border-color:rgba(74,222,128,0.3);color:#4ade80;background:rgba(74,222,128,0.08)}
+  .btn-blue{border-color:rgba(129,140,248,0.3);color:#818cf8;background:rgba(129,140,248,0.08)}
+  .btn-red{border-color:rgba(248,113,113,0.3);color:#f87171;background:rgba(248,113,113,0.08)}
+  .btn-amber{border-color:rgba(251,191,36,0.3);color:#fbbf24;background:rgba(251,191,36,0.08)}
+  .active-badge{display:inline-block;padding:3px 8px;border-radius:6px;font-size:11px;font-weight:600;background:rgba(74,222,128,0.15);color:#4ade80;margin-left:8px}
+  .cue{background:#161616;border:1px solid #222;border-radius:12px;padding:14px;margin-bottom:8px;display:flex;align-items:center;gap:12px}
+  .cue-pc{background:#222;color:#4ade80;font:700 18px monospace;min-width:42px;height:42px;border-radius:8px;display:flex;align-items:center;justify-content:center}
+  .cue-info{flex:1}
+  .cue-label{font-size:14px;font-weight:600;color:#fff}
+  .cue-video{font-size:11px;color:#888;font-family:monospace;margin-top:2px}
+  .cue-blackout .cue-video{color:#f87171}
+  .cue-actions{display:flex;gap:6px}
+  .btn-add{width:100%;padding:14px;border:2px dashed #333;border-radius:12px;background:transparent;color:#666;font-size:15px;cursor:pointer;margin-top:10px}
+  .btn-add:active{border-color:#555;color:#999}
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:100;align-items:center;justify-content:center}
+  .modal-overlay.open{display:flex}
+  .modal{background:#161616;border:1px solid #333;border-radius:16px;padding:24px;width:90%;max-width:400px}
+  .modal h2{font-size:18px;margin-bottom:16px;color:#fff}
+  .field{margin-bottom:14px}
+  .field label{display:block;font-size:12px;color:#888;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px}
+  .field input,.field select{width:100%;padding:10px 14px;background:#0a0a0a;border:1px solid #333;border-radius:8px;color:#fff;font-size:15px;outline:none}
+  .modal-actions{display:flex;gap:10px;margin-top:20px}
+  .modal-actions .btn{flex:1;text-align:center;padding:12px}
+  .divider{height:1px;background:#222;margin:16px 0}
+  .empty{text-align:center;color:#555;padding:30px;font-size:14px}
+</style>
+</head>
+<body>
+
+<h1>StageCue</h1>
+<p class="subtitle">MIDI Ch 15 Program Change → Video</p>
+
+<div class="board-bar">
+  <select id="boardSelect" onchange="switchBoard()"></select>
+  <div class="board-actions">
+    <button class="btn btn-sm btn-green" onclick="openBoardModal()">+ Band</button>
+    <button class="btn btn-sm btn-amber" onclick="openBoardModal(true)">Rename</button>
+    <button class="btn btn-sm btn-red" onclick="deleteBoard()">Delete</button>
+  </div>
+</div>
+
+<div id="cueList"></div>
+<button class="btn-add" onclick="openCueModal()">+ Add Cue</button>
+
+<!-- Cue Modal -->
+<div class="modal-overlay" id="cueModal">
+  <div class="modal">
+    <h2 id="cueModalTitle">Add Cue</h2>
+    <div class="field">
+      <label>MIDI Program Change (0-127)</label>
+      <input type="number" id="editPC" min="0" max="127" placeholder="1">
+    </div>
+    <div class="field">
+      <label>Label</label>
+      <input type="text" id="editLabel" placeholder="Song name">
+    </div>
+    <div class="field">
+      <label>Video File</label>
+      <select id="editVideo"><option value="">— Blackout —</option></select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeCueModal()">Cancel</button>
+      <button class="btn btn-green" onclick="saveCue()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Board Modal -->
+<div class="modal-overlay" id="boardModal">
+  <div class="modal">
+    <h2 id="boardModalTitle">New Band</h2>
+    <div class="field">
+      <label>Band Name</label>
+      <input type="text" id="boardName" placeholder="e.g. 3-Piece, Friday Covers, Wedding Set">
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeBoardModal()">Cancel</button>
+      <button class="btn btn-green" onclick="saveBoard()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let config = { activeBoard: 'default', boards: {} };
+let videos = [];
+let editingPC = null;
+let renamingBoard = false;
+
+async function load() {
+  config = await (await fetch('/api/config')).json();
+  videos = await (await fetch('/api/videos')).json();
+  renderBoardSelect();
+  renderCues();
+}
+
+function renderBoardSelect() {
+  const sel = document.getElementById('boardSelect');
+  sel.innerHTML = Object.entries(config.boards).map(([id, b]) =>
+    `<option value="${id}" ${id === config.activeBoard ? 'selected' : ''}>${b.name}${id === config.activeBoard ? ' ✓' : ''}</option>`
+  ).join('');
+}
+
+function renderCues() {
+  const list = document.getElementById('cueList');
+  const board = config.boards[config.activeBoard];
+  if (!board || Object.keys(board.cues).length === 0) {
+    list.innerHTML = '<div class="empty">No cues yet. Tap + Add Cue to get started.</div>';
+    return;
+  }
+  const sorted = Object.entries(board.cues).sort((a, b) => parseInt(a[0]) - parseInt(b[0]));
+  list.innerHTML = sorted.map(([pc, cue]) => `
+    <div class="cue ${!cue.video ? 'cue-blackout' : ''}">
+      <div class="cue-pc">${pc}</div>
+      <div class="cue-info">
+        <div class="cue-label">${cue.label || 'Untitled'}</div>
+        <div class="cue-video">${cue.video || '⬛ Blackout'}</div>
+      </div>
+      <div class="cue-actions">
+        <button class="btn btn-sm btn-blue" onclick="testCue(${pc})">Test</button>
+        <button class="btn btn-sm" onclick="openCueModal(${pc})">Edit</button>
+        <button class="btn btn-sm btn-red" onclick="deleteCue(${pc})">✕</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ─── Board Management ───────────────────────────────────────────
+
+async function switchBoard() {
+  const boardId = document.getElementById('boardSelect').value;
+  await fetch('/api/board', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ boardId }) });
+  config.activeBoard = boardId;
+  renderBoardSelect();
+  renderCues();
+}
+
+function openBoardModal(rename) {
+  renamingBoard = !!rename;
+  document.getElementById('boardModalTitle').textContent = rename ? 'Rename Band' : 'New Band';
+  document.getElementById('boardName').value = rename ? (config.boards[config.activeBoard]?.name || '') : '';
+  document.getElementById('boardModal').classList.add('open');
+  setTimeout(() => document.getElementById('boardName').focus(), 100);
+}
+
+function closeBoardModal() {
+  document.getElementById('boardModal').classList.remove('open');
+}
+
+async function saveBoard() {
+  const name = document.getElementById('boardName').value.trim();
+  if (!name) return;
+
+  if (renamingBoard) {
+    config.boards[config.activeBoard].name = name;
+  } else {
+    const id = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+$/,'');
+    config.boards[id] = { name, cues: {} };
+    config.activeBoard = id;
+  }
+
+  await fetch('/api/config', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(config) });
+  closeBoardModal();
+  renderBoardSelect();
+  renderCues();
+}
+
+async function deleteBoard() {
+  const ids = Object.keys(config.boards);
+  if (ids.length <= 1) { alert('Cannot delete the last band.'); return; }
+  const name = config.boards[config.activeBoard]?.name;
+  if (!confirm(`Delete "${name}" and all its cues?`)) return;
+
+  delete config.boards[config.activeBoard];
+  config.activeBoard = Object.keys(config.boards)[0];
+  await fetch('/api/config', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(config) });
+  renderBoardSelect();
+  renderCues();
+}
+
+// ─── Cue Management ─────────────────────────────────────────────
+
+function openCueModal(pc) {
+  editingPC = pc !== undefined ? pc : null;
+  const modal = document.getElementById('cueModal');
+  document.getElementById('cueModalTitle').textContent = editingPC !== null ? 'Edit Cue' : 'Add Cue';
+  const pcInput = document.getElementById('editPC');
+  const videoSelect = document.getElementById('editVideo');
+
+  videoSelect.innerHTML = '<option value="">— Blackout —</option>' + videos.map(v => `<option value="${v}">${v}</option>`).join('');
+
+  if (editingPC !== null) {
+    const cue = config.boards[config.activeBoard].cues[String(editingPC)];
+    pcInput.value = editingPC;
+    pcInput.disabled = true;
+    document.getElementById('editLabel').value = cue?.label || '';
+    videoSelect.value = cue?.video || '';
+  } else {
+    pcInput.value = '';
+    pcInput.disabled = false;
+    document.getElementById('editLabel').value = '';
+    videoSelect.value = '';
+  }
+
+  modal.classList.add('open');
+}
+
+function closeCueModal() {
+  document.getElementById('cueModal').classList.remove('open');
+  editingPC = null;
+}
+
+async function saveCue() {
+  const pc = document.getElementById('editPC').value;
+  const label = document.getElementById('editLabel').value;
+  const video = document.getElementById('editVideo').value;
+  if (pc === '') return;
+
+  config.boards[config.activeBoard].cues[String(pc)] = { video, label };
+  await fetch('/api/config', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(config) });
+  closeCueModal();
+  renderCues();
+}
+
+async function deleteCue(pc) {
+  delete config.boards[config.activeBoard].cues[String(pc)];
+  await fetch('/api/config', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(config) });
+  renderCues();
+}
+
+async function testCue(pc) { await fetch(`/api/trigger/${pc}`); }
+
+load();
+</script>
+</body>
+</html>

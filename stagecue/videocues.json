@@ -1,0 +1,12 @@
+{
+  "activeBoard": "default",
+  "boards": {
+    "default": {
+      "name": "Default",
+      "cues": {
+        "4": { "video": "Gunslinger1.mp4", "label": "Gunslinger" },
+        "0": { "video": "", "label": "Blackout" }
+      }
+    }
+  }
+}

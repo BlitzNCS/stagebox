@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>StageCue</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #000;
+    overflow: hidden;
+    width: 100vw;
+    height: 100vh;
+    cursor: none;
+  }
+  video {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100vw;
+    height: 100vh;
+    object-fit: contain;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+  }
+  video.active { opacity: 1; }
+  #status {
+    position: absolute;
+    bottom: 20px; right: 20px;
+    color: rgba(255,255,255,0.3);
+    font: 12px monospace;
+    z-index: 100;
+    opacity: 0;
+    transition: opacity 2s ease;
+  }
+  body.connecting #status { opacity: 1; }
+</style>
+</head>
+<body class="connecting">
+
+<video id="videoA" loop muted playsinline></video>
+<video id="videoB" loop muted playsinline></video>
+<div id="status">Connecting...</div>
+
+<script>
+const videoA = document.getElementById('videoA');
+const videoB = document.getElementById('videoB');
+const status = document.getElementById('status');
+let activeVideo = null;
+let ws = null;
+
+function connect() {
+  const host = window.location.hostname || 'localhost';
+  const port = window.location.port || '3030';
+  ws = new WebSocket(`ws://${host}:${port}`);
+
+  ws.onopen = () => {
+    document.body.classList.remove('connecting');
+    status.textContent = 'Connected';
+    console.log('Connected to StageCue server');
+  };
+
+  ws.onmessage = (e) => {
+    const msg = JSON.parse(e.data);
+    if (msg.type === 'play') {
+      playVideo(msg.video);
+    }
+  };
+
+  ws.onclose = () => {
+    document.body.classList.add('connecting');
+    status.textContent = 'Reconnecting...';
+    setTimeout(connect, 2000);
+  };
+
+  ws.onerror = () => ws.close();
+}
+
+function playVideo(url) {
+  // Blackout - fade both out
+  if (!url) {
+    if (activeVideo) {
+      activeVideo.classList.remove('active');
+      setTimeout(() => {
+        activeVideo.pause();
+        activeVideo.src = '';
+        activeVideo = null;
+      }, 600);
+    }
+    return;
+  }
+
+  // Pick the inactive video element for crossfade
+  const next = (activeVideo === videoA) ? videoB : videoA;
+  const prev = activeVideo;
+
+  next.src = url;
+  next.load();
+
+  next.oncanplay = () => {
+    next.play().then(() => {
+      next.classList.add('active');
+
+      // Fade out previous
+      if (prev) {
+        prev.classList.remove('active');
+        setTimeout(() => {
+          prev.pause();
+          prev.src = '';
+        }, 600);
+      }
+
+      activeVideo = next;
+    }).catch(err => {
+      console.error('Playback failed:', err);
+      // Autoplay blocked - try muted (already muted but just in case)
+      next.muted = true;
+      next.play();
+    });
+
+    next.oncanplay = null;
+  };
+}
+
+// Fullscreen on first click (required by some browsers)
+document.body.addEventListener('click', () => {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(() => {});
+  }
+});
+
+// Prevent screen dimming
+if ('wakeLock' in navigator) {
+  navigator.wakeLock.request('screen').catch(() => {});
+}
+
+connect();
+</script>
+</body>
+</html>

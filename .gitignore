@@ -1,0 +1,6 @@
+node_modules/
+stagecue/videos/*.mp4
+stagecue/videos/*.mov
+stagecue/videos/*.webm
+stagecue/videos/*.mkv
+*.log
