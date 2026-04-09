@@ -1,0 +1,20 @@
+{
+  "name": "cuetools",
+  "version": "2.0.0",
+  "description": "MIDI-triggered video cue and lighting control system for live performance — the software behind CueBoxx",
+  "main": "cuetools.js",
+  "bin": {
+    "cuetools": "./cuetools.js"
+  },
+  "scripts": {
+    "start": "node cuetools.js",
+    "dev": "node cuetools.js"
+  },
+  "dependencies": {
+    "ws": "^8.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "license": "MIT"
+}

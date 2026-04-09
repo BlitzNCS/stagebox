@@ -1,0 +1,24 @@
+[Unit]
+Description=QLC+ — Lighting control for CueBoxx
+After=network.target
+Before=cueboxx.service
+
+[Service]
+Type=simple
+User=cuetools
+Group=cuetools
+Environment=QT_QPA_PLATFORM=offscreen
+Environment=XDG_RUNTIME_DIR=/tmp/runtime-cuetools
+Environment=PULSE_SERVER=none
+ExecStartPre=/bin/mkdir -p /tmp/runtime-cuetools
+ExecStart=/usr/bin/qlcplus -w -p
+Restart=always
+RestartSec=5
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=cueboxx-qlc
+
+[Install]
+WantedBy=multi-user.target

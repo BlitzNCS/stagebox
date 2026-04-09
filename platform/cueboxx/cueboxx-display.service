@@ -1,0 +1,29 @@
+[Unit]
+Description=CuePlayer kiosk display for CueBoxx
+After=cueboxx.service graphical.target
+Requires=cueboxx.service
+
+[Service]
+Type=simple
+User=cuetools
+Group=cuetools
+Environment=DISPLAY=:0
+
+# Wait for CueTools to be ready, then launch Chromium in kiosk mode
+ExecStartPre=/bin/sleep 5
+ExecStart=/usr/bin/chromium-browser \
+  --kiosk \
+  --noerrdialogs \
+  --disable-infobars \
+  --disable-session-crashed-bubble \
+  --disable-translate \
+  --no-first-run \
+  --start-fullscreen \
+  --autoplay-policy=no-user-gesture-required \
+  http://localhost:3030/stage
+
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=graphical.target

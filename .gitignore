@@ -1,6 +1,21 @@
 node_modules/
-stagecue/videos/*.mp4
-stagecue/videos/*.mov
-stagecue/videos/*.webm
-stagecue/videos/*.mkv
+
+# Video files (too large for git)
+cuetools/videos/*.mp4
+cuetools/videos/*.mov
+cuetools/videos/*.webm
+cuetools/videos/*.mkv
+
+# Logs
 *.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+*.swp
+*.swo
+*~
+.vscode/
+.idea/

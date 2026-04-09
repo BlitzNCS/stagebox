@@ -1,0 +1,31 @@
+[Unit]
+Description=CueTools — MIDI-triggered cue system
+After=network.target sound.target
+Wants=cueboxx-qlc.service
+
+[Service]
+Type=simple
+User=cuetools
+Group=cuetools
+WorkingDirectory=/opt/cuetools
+ExecStart=/usr/bin/node /opt/cuetools/cuetools.js
+Restart=always
+RestartSec=5
+
+# Environment
+Environment=NODE_ENV=production
+Environment=CUETOOLS_PORT=3030
+Environment=CUETOOLS_MIDI_DEVICE=/dev/snd/midiC1D0
+Environment=CUETOOLS_MIDI_CHANNEL=14
+Environment=CUETOOLS_QLC_URL=ws://localhost:9999/qlcplusWS
+Environment=CUETOOLS_BASE=/opt/cuetools
+Environment=CUETOOLS_CONFIG=/opt/cuetools/config/cues.json
+Environment=CUETOOLS_VIDEOS=/opt/cuetools/videos
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=cuetools
+
+[Install]
+WantedBy=multi-user.target
