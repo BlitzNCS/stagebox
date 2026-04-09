@@ -1,8 +1,8 @@
 #!/system/bin/sh
-# STAGEBOX HDMI Watcher
+# CueBoxx HDMI Watcher — Pixel 8 Pro Extension
 # Location on phone: /data/local/tmp/hdmi-watcher.sh
 # Polls for external display connection and launches Chrome fullscreen
-# with the StageCue video player page
+# with the CuePlayer video output page
 
 LAUNCHED=0
 

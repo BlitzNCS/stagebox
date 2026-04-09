@@ -1,6 +1,6 @@
 #!/system/bin/sh
-# STAGEBOX Boot Script
-# Location on phone: /data/adb/service.d/stagebox.sh
+# CueBoxx Boot Script — Pixel 8 Pro Extension
+# Location on phone: /data/adb/service.d/cueboxx-boot.sh
 # Runs automatically on boot via Magisk
 
 # Wait for Android to fully boot

@@ -1,9 +1,0 @@
-{
-  "name": "stagecue",
-  "version": "1.0.0",
-  "description": "MIDI-triggered video cue player for live stage shows",
-  "main": "server.js",
-  "dependencies": {
-    "ws": "^8.0.0"
-  }
-}

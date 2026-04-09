@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>StageCue Config</title>
+<title>CueDeck</title>
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
   body{background:#0a0a0a;color:#e0e0e0;font-family:-apple-system,system-ui,sans-serif;padding:20px;max-width:600px;margin:0 auto}
@@ -45,13 +45,13 @@
 </head>
 <body>
 
-<h1>StageCue</h1>
-<p class="subtitle">MIDI Ch 15 Program Change → Video</p>
+<h1>CueDeck</h1>
+<p class="subtitle">MIDI Program Change → Video + Lighting</p>
 
 <div class="board-bar">
   <select id="boardSelect" onchange="switchBoard()"></select>
   <div class="board-actions">
-    <button class="btn btn-sm btn-green" onclick="openBoardModal()">+ Band</button>
+    <button class="btn btn-sm btn-green" onclick="openBoardModal()">+ Board</button>
     <button class="btn btn-sm btn-amber" onclick="openBoardModal(true)">Rename</button>
     <button class="btn btn-sm btn-red" onclick="deleteBoard()">Delete</button>
   </div>
@@ -76,6 +76,10 @@
       <label>Video File</label>
       <select id="editVideo"><option value="">— Blackout —</option></select>
     </div>
+    <div class="field">
+      <label>QLC+ Function ID (optional)</label>
+      <input type="number" id="editQlc" min="0" placeholder="Leave blank for none">
+    </div>
     <div class="modal-actions">
       <button class="btn" onclick="closeCueModal()">Cancel</button>
       <button class="btn btn-green" onclick="saveCue()">Save</button>
@@ -86,9 +90,9 @@
 <!-- Board Modal -->
 <div class="modal-overlay" id="boardModal">
   <div class="modal">
-    <h2 id="boardModalTitle">New Band</h2>
+    <h2 id="boardModalTitle">New Board</h2>
     <div class="field">
-      <label>Band Name</label>
+      <label>Board Name</label>
       <input type="text" id="boardName" placeholder="e.g. 3-Piece, Friday Covers, Wedding Set">
     </div>
     <div class="modal-actions">
@@ -130,13 +134,13 @@ function renderCues() {
     <div class="cue ${!cue.video ? 'cue-blackout' : ''}">
       <div class="cue-pc">${pc}</div>
       <div class="cue-info">
-        <div class="cue-label">${cue.label || 'Untitled'}</div>
-        <div class="cue-video">${cue.video || '⬛ Blackout'}</div>
+        <div class="cue-label">${cue.label || 'Untitled'}${cue.qlcFunction ? ' <span style="color:#818cf8;font-size:11px">QLC:' + cue.qlcFunction + '</span>' : ''}</div>
+        <div class="cue-video">${cue.video || 'Blackout'}</div>
       </div>
       <div class="cue-actions">
         <button class="btn btn-sm btn-blue" onclick="testCue(${pc})">Test</button>
         <button class="btn btn-sm" onclick="openCueModal(${pc})">Edit</button>
-        <button class="btn btn-sm btn-red" onclick="deleteCue(${pc})">✕</button>
+        <button class="btn btn-sm btn-red" onclick="deleteCue(${pc})">X</button>
       </div>
     </div>
   `).join('');
@@ -154,7 +158,7 @@ async function switchBoard() {
 
 function openBoardModal(rename) {
   renamingBoard = !!rename;
-  document.getElementById('boardModalTitle').textContent = rename ? 'Rename Band' : 'New Band';
+  document.getElementById('boardModalTitle').textContent = rename ? 'Rename Board' : 'New Board';
   document.getElementById('boardName').value = rename ? (config.boards[config.activeBoard]?.name || '') : '';
   document.getElementById('boardModal').classList.add('open');
   setTimeout(() => document.getElementById('boardName').focus(), 100);
@@ -184,7 +188,7 @@ async function saveBoard() {
 
 async function deleteBoard() {
   const ids = Object.keys(config.boards);
-  if (ids.length <= 1) { alert('Cannot delete the last band.'); return; }
+  if (ids.length <= 1) { alert('Cannot delete the last board.'); return; }
   const name = config.boards[config.activeBoard]?.name;
   if (!confirm(`Delete "${name}" and all its cues?`)) return;
 
@@ -203,6 +207,7 @@ function openCueModal(pc) {
   document.getElementById('cueModalTitle').textContent = editingPC !== null ? 'Edit Cue' : 'Add Cue';
   const pcInput = document.getElementById('editPC');
   const videoSelect = document.getElementById('editVideo');
+  const qlcInput = document.getElementById('editQlc');
 
   videoSelect.innerHTML = '<option value="">— Blackout —</option>' + videos.map(v => `<option value="${v}">${v}</option>`).join('');
 
@@ -212,11 +217,13 @@ function openCueModal(pc) {
     pcInput.disabled = true;
     document.getElementById('editLabel').value = cue?.label || '';
     videoSelect.value = cue?.video || '';
+    qlcInput.value = cue?.qlcFunction ?? '';
   } else {
     pcInput.value = '';
     pcInput.disabled = false;
     document.getElementById('editLabel').value = '';
     videoSelect.value = '';
+    qlcInput.value = '';
   }
 
   modal.classList.add('open');
@@ -231,9 +238,11 @@ async function saveCue() {
   const pc = document.getElementById('editPC').value;
   const label = document.getElementById('editLabel').value;
   const video = document.getElementById('editVideo').value;
+  const qlcRaw = document.getElementById('editQlc').value;
+  const qlcFunction = qlcRaw !== '' ? parseInt(qlcRaw, 10) : null;
   if (pc === '') return;
 
-  config.boards[config.activeBoard].cues[String(pc)] = { video, label };
+  config.boards[config.activeBoard].cues[String(pc)] = { video, label, qlcFunction };
   await fetch('/api/config', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(config) });
   closeCueModal();
   renderCues();

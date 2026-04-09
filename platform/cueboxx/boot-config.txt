@@ -1,0 +1,33 @@
+# CueBoxx — Recommended Raspberry Pi /boot/config.txt additions
+# Copy relevant lines to /boot/firmware/config.txt (or /boot/config.txt on older OS)
+
+# ─── HDMI Output ────────────────────────────────────────────────
+# Force HDMI output even if no monitor is connected at boot
+hdmi_force_hotplug=1
+
+# Set HDMI to 1080p 60Hz (CEA mode 16)
+# Change hdmi_mode for different resolutions:
+#   4  = 720p  60Hz
+#   16 = 1080p 60Hz (recommended)
+#   31 = 1080p 50Hz
+hdmi_group=1
+hdmi_mode=16
+
+# ─── GPU Memory ─────────────────────────────────────────────────
+# Allocate 256MB to GPU for smooth video playback
+# Reduce to 128 if running Pi 3 with only 1GB RAM
+gpu_mem=256
+
+# ─── Audio ──────────────────────────────────────────────────────
+# Force audio through HDMI (0=auto, 1=analog, 2=HDMI)
+hdmi_drive=2
+
+# ─── USB ────────────────────────────────────────────────────────
+# Max USB current (for USB MIDI + USB DMX interfaces)
+max_usb_current=1
+
+# ─── Display ────────────────────────────────────────────────────
+# Disable screen blanking (prevent display sleep during performance)
+# Also ensure /etc/lightdm/lightdm.conf has:
+#   xserver-command=X -s 0 -dpms
+disable_overscan=1

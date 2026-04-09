@@ -1,5 +1,5 @@
 #!/bin/sh
-# STAGEBOX rc.chroot
+# CueBoxx rc.chroot — Pixel 8 Pro Extension
 # Location on phone: /data/local/tmp/mxwin/etc/rc.chroot
 # Runs when VolksPC Linux starts
 
@@ -24,8 +24,8 @@ chmod 666 /dev/snd/timer 2>/dev/null
 # Start QLC+ headless (env vars scoped to subshell only)
 (export QT_QPA_PLATFORM=offscreen XDG_RUNTIME_DIR=/tmp/runtime-root PULSE_SERVER=none && mkdir -p /tmp/runtime-root && qlcplus -w -p 2>/dev/null &)
 
-# Start StageCue video server
-(cd /home/desktop/stagecue && node server.js >> /home/desktop/stagecue.log 2>&1 &)
+# Start CueTools server
+(cd /home/desktop/cuetools && node cuetools.js >> /home/desktop/cuetools.log 2>&1 &)
 
 # Add all the linux daemons that you want to start here
 /etc/init.d/dbus start
