@@ -1,0 +1,255 @@
+{
+  "devices": [
+    {
+      "id": "pixel-9-pro",
+      "name": "Pixel 9 Pro",
+      "codename": "caiman",
+      "manufacturer": "google",
+      "chipset": "Tensor G4",
+      "bootPartition": "init_boot",
+      "factoryImageBase": "https://developers.google.com/android/images",
+      "hdmiOutput": true,
+      "hdmiMethod": "dp-alt-mode",
+      "oemUnlock": "developer-options",
+      "rootDifficulty": "easy",
+      "volkspcKernel": "Android15-6.6",
+      "volkspcCompat": "full",
+      "notes": []
+    },
+    {
+      "id": "pixel-9",
+      "name": "Pixel 9",
+      "codename": "tokay",
+      "manufacturer": "google",
+      "chipset": "Tensor G4",
+      "bootPartition": "init_boot",
+      "factoryImageBase": "https://developers.google.com/android/images",
+      "hdmiOutput": true,
+      "hdmiMethod": "dp-alt-mode",
+      "oemUnlock": "developer-options",
+      "rootDifficulty": "easy",
+      "volkspcKernel": "Android15-6.6",
+      "volkspcCompat": "full",
+      "notes": []
+    },
+    {
+      "id": "pixel-8-pro",
+      "name": "Pixel 8 Pro",
+      "codename": "husky",
+      "manufacturer": "google",
+      "chipset": "Tensor G3",
+      "bootPartition": "init_boot",
+      "factoryImageBase": "https://developers.google.com/android/images",
+      "hdmiOutput": true,
+      "hdmiMethod": "dp-alt-mode",
+      "oemUnlock": "developer-options",
+      "rootDifficulty": "easy",
+      "volkspcKernel": "Android14-6.1",
+      "volkspcCompat": "full",
+      "notes": [
+        "Original CueBoxx prototype device"
+      ]
+    },
+    {
+      "id": "pixel-8",
+      "name": "Pixel 8",
+      "codename": "shiba",
+      "manufacturer": "google",
+      "chipset": "Tensor G3",
+      "bootPartition": "init_boot",
+      "factoryImageBase": "https://developers.google.com/android/images",
+      "hdmiOutput": true,
+      "hdmiMethod": "dp-alt-mode",
+      "oemUnlock": "developer-options",
+      "rootDifficulty": "easy",
+      "volkspcKernel": "Android14-6.1",
+      "volkspcCompat": "full",
+      "notes": []
+    },
+    {
+      "id": "pixel-8a",
+      "name": "Pixel 8a",
+      "codename": "akita",
+      "manufacturer": "google",
+      "chipset": "Tensor G3",
+      "bootPartition": "init_boot",
+      "factoryImageBase": "https://developers.google.com/android/images",
+      "hdmiOutput": false,
+      "hdmiMethod": null,
+      "oemUnlock": "developer-options",
+      "rootDifficulty": "easy",
+      "volkspcKernel": "Android14-6.1",
+      "volkspcCompat": "full",
+      "notes": [
+        "No HDMI output — use a separate display device for CuePlayer"
+      ]
+    },
+    {
+      "id": "pixel-7-pro",
+      "name": "Pixel 7 Pro",
+      "codename": "cheetah",
+      "manufacturer": "google",
+      "chipset": "Tensor G2",
+      "bootPartition": "init_boot",
+      "factoryImageBase": "https://developers.google.com/android/images",
+      "hdmiOutput": false,
+      "hdmiMethod": null,
+      "oemUnlock": "developer-options",
+      "rootDifficulty": "easy",
+      "volkspcKernel": "Android13-5.15",
+      "volkspcCompat": "full",
+      "notes": [
+        "No DP Alt Mode — use a separate display device for CuePlayer"
+      ]
+    },
+    {
+      "id": "pixel-7",
+      "name": "Pixel 7",
+      "codename": "panther",
+      "manufacturer": "google",
+      "chipset": "Tensor G2",
+      "bootPartition": "init_boot",
+      "factoryImageBase": "https://developers.google.com/android/images",
+      "hdmiOutput": false,
+      "hdmiMethod": null,
+      "oemUnlock": "developer-options",
+      "rootDifficulty": "easy",
+      "volkspcKernel": "Android13-5.15",
+      "volkspcCompat": "full",
+      "notes": [
+        "No DP Alt Mode — use a separate display device for CuePlayer"
+      ]
+    },
+    {
+      "id": "pixel-6-pro",
+      "name": "Pixel 6 Pro",
+      "codename": "raven",
+      "manufacturer": "google",
+      "chipset": "Tensor G1",
+      "bootPartition": "boot",
+      "factoryImageBase": "https://developers.google.com/android/images",
+      "hdmiOutput": false,
+      "hdmiMethod": null,
+      "oemUnlock": "developer-options",
+      "rootDifficulty": "easy",
+      "volkspcKernel": "Android12-5.10",
+      "volkspcCompat": "full",
+      "notes": [
+        "Uses boot partition (not init_boot)",
+        "No DP Alt Mode — use a separate display device for CuePlayer"
+      ]
+    },
+    {
+      "id": "pixel-6",
+      "name": "Pixel 6",
+      "codename": "oriole",
+      "manufacturer": "google",
+      "chipset": "Tensor G1",
+      "bootPartition": "boot",
+      "factoryImageBase": "https://developers.google.com/android/images",
+      "hdmiOutput": false,
+      "hdmiMethod": null,
+      "oemUnlock": "developer-options",
+      "rootDifficulty": "easy",
+      "volkspcKernel": "Android12-5.10",
+      "volkspcCompat": "full",
+      "notes": [
+        "Uses boot partition (not init_boot)"
+      ]
+    },
+    {
+      "id": "oneplus-12",
+      "name": "OnePlus 12",
+      "codename": "waffle",
+      "manufacturer": "oneplus",
+      "chipset": "Snapdragon 8 Gen 3",
+      "bootPartition": "init_boot",
+      "factoryImageBase": null,
+      "hdmiOutput": true,
+      "hdmiMethod": "dp-alt-mode",
+      "oemUnlock": "developer-options",
+      "rootDifficulty": "easy",
+      "volkspcKernel": "Android14-6.1",
+      "volkspcCompat": "likely",
+      "notes": [
+        "No factory image download — extract boot image from OTA or use payload dumper",
+        "OEM unlock is straightforward with no waiting period"
+      ]
+    },
+    {
+      "id": "oneplus-11",
+      "name": "OnePlus 11",
+      "codename": "salami",
+      "manufacturer": "oneplus",
+      "chipset": "Snapdragon 8 Gen 2",
+      "bootPartition": "init_boot",
+      "factoryImageBase": null,
+      "hdmiOutput": true,
+      "hdmiMethod": "dp-alt-mode",
+      "oemUnlock": "developer-options",
+      "rootDifficulty": "easy",
+      "volkspcKernel": "Android13-5.15",
+      "volkspcCompat": "likely",
+      "notes": [
+        "No factory image download — extract boot image from OTA or use payload dumper"
+      ]
+    },
+    {
+      "id": "xiaomi-14",
+      "name": "Xiaomi 14",
+      "codename": "houji",
+      "manufacturer": "xiaomi",
+      "chipset": "Snapdragon 8 Gen 3",
+      "bootPartition": "init_boot",
+      "factoryImageBase": null,
+      "hdmiOutput": true,
+      "hdmiMethod": "dp-alt-mode",
+      "oemUnlock": "mi-unlock",
+      "rootDifficulty": "moderate",
+      "volkspcKernel": "Android14-6.1",
+      "volkspcCompat": "likely",
+      "notes": [
+        "Requires Mi Unlock Tool with ~7-30 day waiting period",
+        "Must apply for unlock permission via Xiaomi account"
+      ]
+    }
+  ],
+  "generic": {
+    "id": "generic",
+    "name": "Other Android Phone",
+    "codename": null,
+    "manufacturer": "unknown",
+    "chipset": "unknown",
+    "bootPartition": "auto-detect",
+    "factoryImageBase": null,
+    "hdmiOutput": "unknown",
+    "hdmiMethod": null,
+    "oemUnlock": "varies",
+    "rootDifficulty": "varies",
+    "volkspcKernel": "auto-detect",
+    "volkspcCompat": "unknown",
+    "notes": [
+      "Check your kernel version: Settings > About Phone > Kernel Version",
+      "Match to a VolksPC GKI kernel package from volkspc.org",
+      "Bootloader unlock process varies by manufacturer — search XDA Developers for your device"
+    ]
+  },
+  "compatibility": {
+    "requirements": {
+      "architecture": "ARM64 (aarch64)",
+      "androidMinVersion": 12,
+      "kernelType": "GKI (Generic Kernel Image)",
+      "rootRequired": true,
+      "storageMinGB": 8,
+      "ramMinGB": 4
+    },
+    "recommended": {
+      "device": "Google Pixel 8 or newer",
+      "reason": "Easiest root, confirmed VolksPC support, HDMI output, active community"
+    },
+    "avoid": {
+      "samsung": "Knox eFUSE trips permanently when bootloader is unlocked — breaks Samsung Pay, Knox, and may void warranty. US/Canada Snapdragon models often cannot unlock at all.",
+      "carrierLocked": "Carrier-locked phones typically cannot unlock the bootloader regardless of manufacturer."
+    }
+  }
+}

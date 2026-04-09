@@ -67,12 +67,15 @@ Then open **CueDeck** on your phone/tablet: `http://<pi-ip>:3030/deck`
 │       └── boot-config.txt      # Recommended RPi boot settings
 │
 ├── extensions/
-│   └── pixel8-pro/              # Pixel 8 Pro extension (original prototype)
-│       ├── scripts/
-│       │   ├── cueboxx-boot.sh  # Magisk boot hook
-│       │   ├── hdmi-watcher.sh  # HDMI display detection
-│       │   └── rc.chroot        # VolksPC Linux init
-│       └── deploy.sh            # ADB deployment script
+│   └── android/                 # Android phone extension (multi-device)
+│       ├── profiles/
+│       │   └── devices.json     # Device database (Pixel, OnePlus, etc.)
+│       ├── setup/
+│       │   ├── setup.js         # Interactive setup assistant (zero deps)
+│       │   └── lib/             # ADB, detection, rooting, deployment
+│       ├── templates/           # Boot script templates (per-device generated)
+│       └── scripts/
+│           └── deploy-quick.sh  # Quick deploy for advanced users
 │
 └── docs/
     ├── architecture.md          # System architecture + module breakdown
@@ -107,12 +110,23 @@ CueTools supports multiple **boards** — named cue sets that map the same MIDI 
 - "3-Piece" board: PC 1 → `superstition-3piece.mp4` + QLC function 12
 - "Wedding" board: PC 1 → `first-dance.mp4` + QLC function 20
 
+## Android Phone Extension
+
+Got a spare Android phone? Turn it into a CueBoxx node:
+
+```bash
+cd extensions/android/setup
+node setup.js
+```
+
+The setup assistant auto-detects your phone, walks you through rooting + VolksPC, and deploys CueTools — all from one interactive script. Supports Pixel 8/9 (recommended), Pixel 6/7, OnePlus, and more. See [extensions/android/](extensions/android/) for details.
+
 ## Extending to Other Hardware
 
 CueTools is platform-agnostic. The Raspberry Pi (CueBoxx) is the primary target, but the software runs anywhere Node.js does.
 
 **Platforms** (`/platform`) provide first-class deployment support.
-**Extensions** (`/extensions`) adapt CueTools to non-standard hardware like the Pixel 8 Pro prototype.
+**Extensions** (`/extensions`) adapt CueTools to additional hardware.
 
 See `extensions/README.md` for how to add support for new hardware.
 

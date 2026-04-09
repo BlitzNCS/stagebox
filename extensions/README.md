@@ -6,7 +6,7 @@ Extensions adapt CueTools to run on hardware other than the primary CueBoxx (Ras
 
 | Extension | Directory | Description |
 |---|---|---|
-| **Pixel 8 Pro** | `pixel8-pro/` | Rooted Android phone running VolksPC Debian chroot |
+| **Android** | `android/` | Rooted Android phone (Pixel, OnePlus, etc.) via VolksPC chroot |
 
 ## How Extensions Differ from Platforms
 

@@ -1,0 +1,16 @@
+{
+  "name": "cueboxx-android-setup",
+  "version": "1.0.0",
+  "description": "CueBoxx setup assistant for Android phones — zero dependencies, pure Node.js",
+  "main": "setup.js",
+  "bin": {
+    "cueboxx-setup": "./setup.js"
+  },
+  "scripts": {
+    "start": "node setup.js"
+  },
+  "dependencies": {},
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
