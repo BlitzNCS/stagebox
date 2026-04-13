@@ -1,5 +1,8 @@
 const { WebSocket } = require('ws');
 const EventEmitter = require('events');
+const createLogger = require('./logger');
+
+const log = createLogger('qlc');
 
 class QlcBridge extends EventEmitter {
   constructor(options = {}) {
@@ -71,10 +74,12 @@ class QlcBridge extends EventEmitter {
         }
       });
 
-      this.ws.on('error', () => {
+      this.ws.on('error', (err) => {
+        log.debug(`QLC+ connection error: ${err.message}`);
         this.ws = null;
       });
-    } catch {
+    } catch (err) {
+      log.error(`QLC+ connect failed: ${err.message}`);
       this.ws = null;
     }
   }

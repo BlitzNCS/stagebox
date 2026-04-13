@@ -24,6 +24,15 @@ ExecStart=/usr/bin/chromium-browser \
 
 Restart=always
 RestartSec=10
+StartLimitIntervalSec=120
+StartLimitBurst=3
+
+# Security hardening
+NoNewPrivileges=true
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+MemoryMax=512M
 
 [Install]
 WantedBy=graphical.target

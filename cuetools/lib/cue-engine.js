@@ -1,4 +1,7 @@
 const EventEmitter = require('events');
+const createLogger = require('./logger');
+
+const log = createLogger('engine');
 
 class CueEngine extends EventEmitter {
   constructor(configStore, qlcBridge) {
@@ -27,7 +30,7 @@ class CueEngine extends EventEmitter {
       ? { type: 'play', video: cue.video ? `/videos/${cue.video}` : '', label: cue.label }
       : { type: 'play', video: '', label: 'Unmapped' };
 
-    console.log(`[${boardName}] PC ${programChange} → ${cue ? cue.label : 'unmapped'}`);
+    log.info(`[${boardName}] PC ${programChange} → ${cue ? cue.label : 'unmapped'}`);
 
     // Broadcast to all connected CuePlayer clients
     const payload = JSON.stringify(msg);
@@ -39,9 +42,9 @@ class CueEngine extends EventEmitter {
     if (cue?.qlcFunction) {
       const sent = this.qlcBridge.triggerFunction(cue.qlcFunction);
       if (!sent) {
-        console.log(`  QLC+ not connected, skipping function ${cue.qlcFunction}`);
+        log.warn(`QLC+ not connected, skipping function ${cue.qlcFunction}`);
       } else {
-        console.log(`  QLC+ function ${cue.qlcFunction} triggered`);
+        log.debug(`QLC+ function ${cue.qlcFunction} triggered`);
       }
     }
 

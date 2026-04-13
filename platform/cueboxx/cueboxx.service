@@ -11,6 +11,8 @@ WorkingDirectory=/opt/cuetools
 ExecStart=/usr/bin/node /opt/cuetools/cuetools.js
 Restart=always
 RestartSec=5
+StartLimitIntervalSec=60
+StartLimitBurst=5
 
 # Environment
 Environment=NODE_ENV=production
@@ -21,6 +23,18 @@ Environment=CUETOOLS_QLC_URL=ws://localhost:9999/qlcplusWS
 Environment=CUETOOLS_BASE=/opt/cuetools
 Environment=CUETOOLS_CONFIG=/opt/cuetools/config/cues.json
 Environment=CUETOOLS_VIDEOS=/opt/cuetools/videos
+
+# Security hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/cuetools/config /opt/cuetools/videos
+PrivateTmp=true
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+MemoryMax=512M
+CPUQuota=80%
 
 # Logging
 StandardOutput=journal

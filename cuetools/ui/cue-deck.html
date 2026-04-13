@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -14,6 +14,8 @@
   .board-bar select option{background:#161616;color:#fff}
   .board-actions{display:flex;gap:6px}
   .btn{padding:8px 14px;border:1px solid #333;border-radius:8px;background:#1a1a1a;color:#ccc;font-size:13px;cursor:pointer;white-space:nowrap}
+  .btn:hover{background:#252525}
+  .btn:focus-visible{outline:2px solid #818cf8;outline-offset:2px}
   .btn:active{background:#333}
   .btn-sm{padding:6px 10px;font-size:12px}
   .btn-green{border-color:rgba(74,222,128,0.3);color:#4ade80;background:rgba(74,222,128,0.08)}
@@ -29,6 +31,8 @@
   .cue-blackout .cue-video{color:#f87171}
   .cue-actions{display:flex;gap:6px}
   .btn-add{width:100%;padding:14px;border:2px dashed #333;border-radius:12px;background:transparent;color:#666;font-size:15px;cursor:pointer;margin-top:10px}
+  .btn-add:hover{border-color:#555;color:#999}
+  .btn-add:focus-visible{outline:2px solid #818cf8;outline-offset:2px}
   .btn-add:active{border-color:#555;color:#999}
   .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:100;align-items:center;justify-content:center}
   .modal-overlay.open{display:flex}
@@ -37,6 +41,7 @@
   .field{margin-bottom:14px}
   .field label{display:block;font-size:12px;color:#888;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px}
   .field input,.field select{width:100%;padding:10px 14px;background:#0a0a0a;border:1px solid #333;border-radius:8px;color:#fff;font-size:15px;outline:none}
+  .field input:focus-visible,.field select:focus-visible{border-color:#818cf8;outline:2px solid rgba(129,140,248,0.3);outline-offset:-2px}
   .modal-actions{display:flex;gap:10px;margin-top:20px}
   .modal-actions .btn{flex:1;text-align:center;padding:12px}
   .divider{height:1px;background:#222;margin:16px 0}
@@ -45,39 +50,44 @@
 </head>
 <body>
 
-<h1>CueDeck</h1>
-<p class="subtitle">MIDI Program Change → Video + Lighting</p>
+<header>
+  <h1>CueDeck</h1>
+  <p class="subtitle">MIDI Program Change &rarr; Video + Lighting</p>
+</header>
 
-<div class="board-bar">
-  <select id="boardSelect" onchange="switchBoard()"></select>
-  <div class="board-actions">
-    <button class="btn btn-sm btn-green" onclick="openBoardModal()">+ Board</button>
-    <button class="btn btn-sm btn-amber" onclick="openBoardModal(true)">Rename</button>
-    <button class="btn btn-sm btn-red" onclick="deleteBoard()">Delete</button>
+<nav class="board-bar" aria-label="Board selection">
+  <label for="boardSelect" class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)">Select board</label>
+  <select id="boardSelect" onchange="switchBoard()" aria-label="Active board"></select>
+  <div class="board-actions" role="group" aria-label="Board actions">
+    <button class="btn btn-sm btn-green" onclick="openBoardModal()" aria-label="Add new board">+ Board</button>
+    <button class="btn btn-sm btn-amber" onclick="openBoardModal(true)" aria-label="Rename current board">Rename</button>
+    <button class="btn btn-sm btn-red" onclick="deleteBoard()" aria-label="Delete current board">Delete</button>
   </div>
-</div>
+</nav>
 
-<div id="cueList"></div>
-<button class="btn-add" onclick="openCueModal()">+ Add Cue</button>
+<main>
+  <section id="cueList" aria-label="Cue list" role="list"></section>
+  <button class="btn-add" onclick="openCueModal()" aria-label="Add new cue">+ Add Cue</button>
+</main>
 
 <!-- Cue Modal -->
-<div class="modal-overlay" id="cueModal">
+<div class="modal-overlay" id="cueModal" role="dialog" aria-modal="true" aria-labelledby="cueModalTitle">
   <div class="modal">
     <h2 id="cueModalTitle">Add Cue</h2>
     <div class="field">
-      <label>MIDI Program Change (0-127)</label>
+      <label for="editPC">MIDI Program Change (0-127)</label>
       <input type="number" id="editPC" min="0" max="127" placeholder="1">
     </div>
     <div class="field">
-      <label>Label</label>
+      <label for="editLabel">Label</label>
       <input type="text" id="editLabel" placeholder="Song name">
     </div>
     <div class="field">
-      <label>Video File</label>
+      <label for="editVideo">Video File</label>
       <select id="editVideo"><option value="">— Blackout —</option></select>
     </div>
     <div class="field">
-      <label>QLC+ Function ID (optional)</label>
+      <label for="editQlc">QLC+ Function ID (optional)</label>
       <input type="number" id="editQlc" min="0" placeholder="Leave blank for none">
     </div>
     <div class="modal-actions">
@@ -88,11 +98,11 @@
 </div>
 
 <!-- Board Modal -->
-<div class="modal-overlay" id="boardModal">
+<div class="modal-overlay" id="boardModal" role="dialog" aria-modal="true" aria-labelledby="boardModalTitle">
   <div class="modal">
     <h2 id="boardModalTitle">New Board</h2>
     <div class="field">
-      <label>Board Name</label>
+      <label for="boardName">Board Name</label>
       <input type="text" id="boardName" placeholder="e.g. 3-Piece, Friday Covers, Wedding Set">
     </div>
     <div class="modal-actions">
@@ -118,7 +128,7 @@ async function load() {
 function renderBoardSelect() {
   const sel = document.getElementById('boardSelect');
   sel.innerHTML = Object.entries(config.boards).map(([id, b]) =>
-    `<option value="${id}" ${id === config.activeBoard ? 'selected' : ''}>${b.name}${id === config.activeBoard ? ' ✓' : ''}</option>`
+    `<option value="${id}" ${id === config.activeBoard ? 'selected' : ''}>${b.name}${id === config.activeBoard ? ' \u2713' : ''}</option>`
   ).join('');
 }
 
@@ -126,21 +136,21 @@ function renderCues() {
   const list = document.getElementById('cueList');
   const board = config.boards[config.activeBoard];
   if (!board || Object.keys(board.cues).length === 0) {
-    list.innerHTML = '<div class="empty">No cues yet. Tap + Add Cue to get started.</div>';
+    list.innerHTML = '<div class="empty" role="listitem">No cues yet. Tap + Add Cue to get started.</div>';
     return;
   }
   const sorted = Object.entries(board.cues).sort((a, b) => parseInt(a[0]) - parseInt(b[0]));
   list.innerHTML = sorted.map(([pc, cue]) => `
-    <div class="cue ${!cue.video ? 'cue-blackout' : ''}">
-      <div class="cue-pc">${pc}</div>
+    <div class="cue ${!cue.video ? 'cue-blackout' : ''}" role="listitem" aria-label="Cue ${pc}: ${cue.label || 'Untitled'}">
+      <div class="cue-pc" aria-label="Program change ${pc}">${pc}</div>
       <div class="cue-info">
         <div class="cue-label">${cue.label || 'Untitled'}${cue.qlcFunction ? ' <span style="color:#818cf8;font-size:11px">QLC:' + cue.qlcFunction + '</span>' : ''}</div>
         <div class="cue-video">${cue.video || 'Blackout'}</div>
       </div>
-      <div class="cue-actions">
-        <button class="btn btn-sm btn-blue" onclick="testCue(${pc})">Test</button>
-        <button class="btn btn-sm" onclick="openCueModal(${pc})">Edit</button>
-        <button class="btn btn-sm btn-red" onclick="deleteCue(${pc})">X</button>
+      <div class="cue-actions" role="group" aria-label="Actions for cue ${pc}">
+        <button class="btn btn-sm btn-blue" onclick="testCue(${pc})" aria-label="Test cue ${pc}">Test</button>
+        <button class="btn btn-sm" onclick="openCueModal(${pc})" aria-label="Edit cue ${pc}">Edit</button>
+        <button class="btn btn-sm btn-red" onclick="deleteCue(${pc})" aria-label="Delete cue ${pc}">X</button>
       </div>
     </div>
   `).join('');
@@ -227,6 +237,7 @@ function openCueModal(pc) {
   }
 
   modal.classList.add('open');
+  setTimeout(() => (editingPC !== null ? document.getElementById('editLabel') : pcInput).focus(), 100);
 }
 
 function closeCueModal() {
@@ -255,6 +266,14 @@ async function deleteCue(pc) {
 }
 
 async function testCue(pc) { await fetch(`/api/trigger/${pc}`); }
+
+// ─── Keyboard: close modals on Escape ──────────────────────────
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    closeCueModal();
+    closeBoardModal();
+  }
+});
 
 load();
 </script>

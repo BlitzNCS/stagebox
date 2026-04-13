@@ -27,6 +27,10 @@ MIDI Source (e.g. iPad + mixer)
 │  │ VideoServer  │        │        │      │
 │  │ (file serve) │        │        │      │
 │  └─────────────┘        │        │      │
+│                         │        │      │
+│  ┌─────────────┐        │        │      │
+│  │ Logger       │ (all modules)   │      │
+│  └─────────────┘        │        │      │
 └─────────────────────────┼────────┼──────┘
                           │        │
                 ┌─────────┘        └──────────┐
@@ -53,10 +57,28 @@ Reads raw MIDI bytes from a device file (e.g. `/dev/snd/midiC1D0`). Parses Progr
 WebSocket client that connects to QLC+'s web API (`ws://localhost:9999/qlcplusWS`). Sends pipe-delimited commands to start/stop lighting functions. Auto-reconnects on disconnect.
 
 ### ConfigStore (`lib/config-store.js`)
-Manages the cue configuration JSON file. Supports multiple "boards" (cue sets), allowing different video/lighting mappings for different bands or shows. Handles config loading, saving, migration from legacy format, and board switching.
+Manages the cue configuration JSON file. Supports multiple "boards" (cue sets), allowing different video/lighting mappings for different bands or shows. Handles config loading, saving, migration from legacy format, board switching, and schema validation.
 
 ### VideoServer (`lib/video-server.js`)
-Serves video files over HTTP with range request support (for seeking). Lists available video files and auto-detects MIME types.
+Serves video files over HTTP with range request support (for seeking). Lists available video files and auto-detects MIME types. All file I/O is async to avoid blocking the event loop.
+
+### Logger (`lib/logger.js`)
+Structured logging with ISO 8601 timestamps, log levels (error, warn, info, debug), and module tags. All modules use the logger for consistent, filterable output. Log level is controlled via `CUETOOLS_LOG_LEVEL` environment variable.
+
+## Security
+
+### API Authentication
+API endpoints can be protected with token-based authentication. Set `CUETOOLS_API_TOKEN` to enable. When set, all `/api/*` requests must include an `Authorization: Bearer <token>` header.
+
+UI routes (`/`, `/stage`, `/config`, `/deck`) and video streaming (`/videos/*`) are not protected — the CuePlayer needs direct access to function.
+
+### Input Validation
+- POST request bodies are limited to 512 KB (configurable via `CUETOOLS_MAX_BODY`)
+- Request bodies have a 30-second timeout (configurable via `CUETOOLS_REQUEST_TIMEOUT`)
+- Config objects are validated against a schema before saving (structure, types, PC range 0-127)
+- All JSON responses use `JSON.stringify()` to prevent injection
+- Video filenames are sanitised via `path.basename()` to prevent path traversal
+- CORS headers are applied consistently across all API endpoints
 
 ## UI Components
 
@@ -67,9 +89,13 @@ Fullscreen video output designed for HDMI-connected displays. Receives WebSocket
 - Auto-reconnect on WebSocket disconnect
 - Wake lock to prevent screen dimming
 - Fullscreen on click
+- ARIA roles for accessibility
 
 ### CueDeck (`ui/cue-deck.html`)
-Configuration dashboard accessed from a tablet/phone on the same network. Manages boards (cue sets), individual cues (MIDI PC → video + QLC+ function mapping), and provides a test trigger button for each cue.
+Configuration dashboard accessed from a tablet/phone on the same network. Manages boards (cue sets), individual cues (MIDI PC → video + QLC+ function mapping), and provides a test trigger button for each cue. Features:
+- Keyboard navigation and focus management
+- ARIA labels, roles, and modal attributes
+- Escape key to close modals
 
 ## Data Flow
 
@@ -114,3 +140,30 @@ All settings can be overridden via environment variables for platform flexibilit
 | `CUETOOLS_CONFIG` | `<base>/config/cues.json` | Config file path |
 | `CUETOOLS_VIDEOS` | `<base>/videos` | Video directory path |
 | `CUETOOLS_UI` | `<base>/ui` | UI files directory path |
+| `CUETOOLS_API_TOKEN` | _(empty)_ | API auth token (empty = auth disabled) |
+| `CUETOOLS_MAX_BODY` | `524288` | Max POST body size in bytes (512 KB) |
+| `CUETOOLS_REQUEST_TIMEOUT` | `30000` | POST request timeout in ms |
+| `CUETOOLS_LOG_LEVEL` | `info` | Log level: error, warn, info, debug |
+
+## Testing
+
+Tests use Node.js built-in test runner (`node:test`). Run with:
+
+```bash
+cd cuetools
+npm test
+```
+
+Test coverage includes:
+- **ConfigStore**: loading, saving, migration, board switching, schema validation
+- **CueEngine**: triggering, WebSocket broadcast, QLC+ dispatch, status reporting
+- **MidiListener**: MIDI byte parsing, channel filtering, reconnection
+- **VideoServer**: file listing, streaming, range requests, path traversal prevention
+- **QlcBridge**: connection state, function triggering
+- **Logger**: module creation and output
+
+## CI/CD
+
+GitHub Actions runs on every push and pull request to `main`:
+- **Test job**: runs `npm test` across Node.js 18, 20, and 22
+- **Lint job**: runs ESLint on Node.js 22

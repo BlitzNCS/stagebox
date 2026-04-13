@@ -1,5 +1,8 @@
 const fs = require('fs');
 const EventEmitter = require('events');
+const createLogger = require('./logger');
+
+const log = createLogger('midi');
 
 class MidiListener extends EventEmitter {
   constructor(options = {}) {
@@ -65,7 +68,8 @@ class MidiListener extends EventEmitter {
         }
       });
 
-      this.stream.on('error', () => {
+      this.stream.on('error', (err) => {
+        log.error(`MIDI stream error: ${err.message}`);
         this.stream = null;
         if (this.running) {
           this.emit('disconnected', this.device);
@@ -81,7 +85,8 @@ class MidiListener extends EventEmitter {
       });
 
       this.emit('connected', this.device, this.channel);
-    } catch {
+    } catch (err) {
+      log.error(`MIDI connect error: ${err.message}`);
       if (this.running) {
         setTimeout(() => this._connect(), this.retryInterval);
       }
