@@ -232,5 +232,141 @@ describe('ConfigStore', () => {
         boards: { x: { name: 'X', cues: { '1': { video: '', label: 'OK', qlcFunction: null } } } }
       }), null);
     });
+
+    it('accepts config with valid settings', () => {
+      store = new ConfigStore(configPath);
+      assert.equal(store.validate({
+        activeBoard: 'x',
+        settings: { midiChannel: 10, qlcEnabled: false },
+        boards: { x: { name: 'X', cues: {} } }
+      }), null);
+    });
+
+    it('rejects config with invalid settings', () => {
+      store = new ConfigStore(configPath);
+      assert.ok(store.validate({
+        activeBoard: 'x',
+        settings: { midiChannel: 99 },
+        boards: { x: { name: 'X', cues: {} } }
+      }));
+    });
+  });
+
+  describe('settings', () => {
+    it('default config includes settings section', () => {
+      store = new ConfigStore(configPath);
+      const cfg = store.load();
+      assert.ok(cfg.settings);
+      assert.equal(cfg.settings.midiChannel, 15);
+      assert.equal(cfg.settings.qlcEnabled, true);
+    });
+
+    it('migrates v2.0 config without settings', () => {
+      const v2 = {
+        activeBoard: 'default',
+        boards: { default: { name: 'Default', cues: {} } }
+      };
+      fs.writeFileSync(configPath, JSON.stringify(v2));
+      store = new ConfigStore(configPath);
+      const cfg = store.load();
+      assert.ok(cfg.settings);
+      assert.equal(cfg.settings.midiChannel, 15);
+    });
+
+    it('getSettings() returns defaults merged with config', () => {
+      store = new ConfigStore(configPath);
+      store.load();
+      store.config.settings = { midiChannel: 3 };
+      const s = store.getSettings();
+      assert.equal(s.midiChannel, 3);
+      assert.equal(s.midiDevice, '/dev/snd/midiC1D0'); // default
+      assert.equal(s.qlcEnabled, true); // default
+    });
+
+    it('updateSettings() merges and persists', () => {
+      store = new ConfigStore(configPath);
+      store.load();
+      store.updateSettings({ midiChannel: 10 });
+      assert.equal(store.config.settings.midiChannel, 10);
+      // Check it was persisted
+      const raw = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+      assert.equal(raw.settings.midiChannel, 10);
+    });
+
+    it('updateSettings() emits midi-changed on channel change', (_, done) => {
+      store = new ConfigStore(configPath);
+      store.load();
+      store.on('midi-changed', (s) => {
+        assert.equal(s.midiChannel, 5);
+        done();
+      });
+      store.updateSettings({ midiChannel: 5 });
+    });
+
+    it('updateSettings() emits qlc-changed on qlcEnabled change', (_, done) => {
+      store = new ConfigStore(configPath);
+      store.load();
+      store.on('qlc-changed', (s) => {
+        assert.equal(s.qlcEnabled, false);
+        done();
+      });
+      store.updateSettings({ qlcEnabled: false });
+    });
+
+    it('updateSettings() emits settings-changed', (_, done) => {
+      store = new ConfigStore(configPath);
+      store.load();
+      store.on('settings-changed', (s) => {
+        assert.equal(s.midiChannel, 8);
+        done();
+      });
+      store.updateSettings({ midiChannel: 8 });
+    });
+
+    it('updateSettings() does not emit midi-changed if midi unchanged', () => {
+      store = new ConfigStore(configPath);
+      store.load();
+      let called = false;
+      store.on('midi-changed', () => { called = true; });
+      store.updateSettings({ qlcEnabled: false });
+      assert.equal(called, false);
+    });
+  });
+
+  describe('validateSettings()', () => {
+    it('accepts valid settings', () => {
+      store = new ConfigStore(configPath);
+      assert.equal(store.validateSettings({ midiChannel: 1 }), null);
+      assert.equal(store.validateSettings({ midiChannel: 16 }), null);
+      assert.equal(store.validateSettings({ qlcEnabled: false }), null);
+      assert.equal(store.validateSettings({ midiDevice: '/dev/midi1' }), null);
+      assert.equal(store.validateSettings({ qlcUrl: 'ws://other:9999' }), null);
+    });
+
+    it('rejects midiChannel out of range', () => {
+      store = new ConfigStore(configPath);
+      assert.ok(store.validateSettings({ midiChannel: 0 }));
+      assert.ok(store.validateSettings({ midiChannel: 17 }));
+      assert.ok(store.validateSettings({ midiChannel: 1.5 }));
+      assert.ok(store.validateSettings({ midiChannel: 'abc' }));
+    });
+
+    it('rejects wrong types', () => {
+      store = new ConfigStore(configPath);
+      assert.ok(store.validateSettings({ midiDevice: 123 }));
+      assert.ok(store.validateSettings({ qlcUrl: 123 }));
+      assert.ok(store.validateSettings({ qlcEnabled: 'yes' }));
+    });
+
+    it('rejects non-object', () => {
+      store = new ConfigStore(configPath);
+      assert.ok(store.validateSettings(null));
+      assert.ok(store.validateSettings('string'));
+    });
+
+    it('accepts empty object (partial update)', () => {
+      store = new ConfigStore(configPath);
+      assert.equal(store.validateSettings({}), null);
+    });
   });
 });

@@ -1,5 +1,11 @@
 {
   "activeBoard": "default",
+  "settings": {
+    "midiChannel": 15,
+    "midiDevice": "/dev/snd/midiC1D0",
+    "qlcUrl": "ws://localhost:9999/qlcplusWS",
+    "qlcEnabled": true
+  },
   "boards": {
     "default": {
       "name": "Default",

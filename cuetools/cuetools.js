@@ -6,6 +6,7 @@ const fs = require('fs');
 const { WebSocketServer } = require('ws');
 
 const ConfigStore = require('./lib/config-store');
+const { DEFAULT_SETTINGS } = require('./lib/config-store');
 const MidiListener = require('./lib/midi-listener');
 const QlcBridge = require('./lib/qlc-bridge');
 const VideoServer = require('./lib/video-server');
@@ -20,25 +21,97 @@ const CONFIG_PATH = process.env.CUETOOLS_CONFIG || path.join(BASE_DIR, 'config',
 const VIDEO_DIR = process.env.CUETOOLS_VIDEOS || path.join(BASE_DIR, 'videos');
 const UI_DIR = process.env.CUETOOLS_UI || path.join(BASE_DIR, 'ui');
 
-// ─── Settings (env-overridable for platform flexibility) ───────
+// ─── Settings (env vars override config, config overrides defaults) ──
 const HTTP_PORT = parseInt(process.env.CUETOOLS_PORT, 10) || 3030;
-const MIDI_DEVICE = process.env.CUETOOLS_MIDI_DEVICE || '/dev/snd/midiC1D0';
-const MIDI_CHANNEL = parseInt(process.env.CUETOOLS_MIDI_CHANNEL, 10) ?? 14;
-const QLC_URL = process.env.CUETOOLS_QLC_URL || 'ws://localhost:9999/qlcplusWS';
 
 // ─── Security settings ─────────────────────────────────────────
 const API_TOKEN = process.env.CUETOOLS_API_TOKEN || '';
-const MAX_BODY_SIZE = parseInt(process.env.CUETOOLS_MAX_BODY, 10) || 1024 * 512; // 512 KB
-const REQUEST_TIMEOUT = parseInt(process.env.CUETOOLS_REQUEST_TIMEOUT, 10) || 30000; // 30s
+const MAX_BODY_SIZE = parseInt(process.env.CUETOOLS_MAX_BODY, 10) || 1024 * 512;
+const REQUEST_TIMEOUT = parseInt(process.env.CUETOOLS_REQUEST_TIMEOUT, 10) || 30000;
 
-// ─── Initialise modules ────────────────────────────────────────
+// ─── Initialise config ─────────────────────────────────────────
 const configStore = new ConfigStore(CONFIG_PATH);
 configStore.load();
 
-const qlcBridge = new QlcBridge({ url: QLC_URL });
+// Resolve effective settings: env vars take priority over config file
+function getEffectiveSettings() {
+  const cfgSettings = configStore.getSettings();
+  return {
+    midiChannel: process.env.CUETOOLS_MIDI_CHANNEL !== undefined
+      ? parseInt(process.env.CUETOOLS_MIDI_CHANNEL, 10) + 1  // env is 0-indexed, settings are 1-indexed
+      : cfgSettings.midiChannel,
+    midiDevice: process.env.CUETOOLS_MIDI_DEVICE || cfgSettings.midiDevice,
+    qlcUrl: process.env.CUETOOLS_QLC_URL || cfgSettings.qlcUrl,
+    qlcEnabled: cfgSettings.qlcEnabled
+  };
+}
+
+const initialSettings = getEffectiveSettings();
+
+// ─── Initialise modules ────────────────────────────────────────
 const videoServer = new VideoServer(VIDEO_DIR);
+
+let qlcBridge = new QlcBridge({ url: initialSettings.qlcUrl });
 const cueEngine = new CueEngine(configStore, qlcBridge);
-const midiListener = new MidiListener({ device: MIDI_DEVICE, channel: MIDI_CHANNEL });
+
+let midiListener = new MidiListener({
+  device: initialSettings.midiDevice,
+  channel: initialSettings.midiChannel - 1  // MidiListener expects 0-indexed
+});
+
+// ─── Module restart helpers ────────────────────────────────────
+function wireUpMidi(ml) {
+  ml.on('program-change', pc => cueEngine.trigger(pc));
+  ml.on('connected', (dev, ch) => log.info(`MIDI listening on ${dev} (channel ${ch + 1})`));
+  ml.on('waiting', dev => log.warn(`MIDI device ${dev} not found, retrying...`));
+  ml.on('disconnected', dev => log.warn(`MIDI device ${dev} disconnected, retrying...`));
+}
+
+function wireUpQlc(bridge) {
+  bridge.on('connected', () => log.info('QLC+ connected'));
+  bridge.on('disconnected', () => log.warn('QLC+ disconnected'));
+  bridge.on('functions-list', fns => {
+    log.info('QLC+ functions:');
+    fns.forEach(f => log.info(`  ID ${f.id}: ${f.name}`));
+  });
+}
+
+// Handle runtime MIDI config changes
+configStore.on('midi-changed', (settings) => {
+  // Don't restart if env vars override config
+  if (process.env.CUETOOLS_MIDI_DEVICE || process.env.CUETOOLS_MIDI_CHANNEL !== undefined) {
+    log.info('MIDI settings changed in config, but env vars take priority');
+    return;
+  }
+  log.info(`Restarting MIDI listener: ${settings.midiDevice} ch ${settings.midiChannel}`);
+  midiListener.stop();
+  midiListener = new MidiListener({
+    device: settings.midiDevice,
+    channel: settings.midiChannel - 1
+  });
+  wireUpMidi(midiListener);
+  midiListener.start();
+});
+
+// Handle runtime QLC+ config changes
+configStore.on('qlc-changed', (settings) => {
+  if (process.env.CUETOOLS_QLC_URL) {
+    log.info('QLC+ settings changed in config, but env var takes priority');
+    return;
+  }
+  qlcBridge.stop();
+  if (settings.qlcEnabled) {
+    log.info(`Restarting QLC+ bridge: ${settings.qlcUrl}`);
+    qlcBridge = new QlcBridge({ url: settings.qlcUrl, connectDelay: 0 });
+    cueEngine.qlcBridge = qlcBridge;
+    wireUpQlc(qlcBridge);
+    qlcBridge.start();
+  } else {
+    log.info('QLC+ disabled');
+    qlcBridge = new QlcBridge({ url: settings.qlcUrl });
+    cueEngine.qlcBridge = qlcBridge;
+  }
+});
 
 // ─── Load UI files ─────────────────────────────────────────────
 let playerHtml, deckHtml;
@@ -62,32 +135,14 @@ function readBody(req) {
   return new Promise((resolve, reject) => {
     let body = '';
     let size = 0;
-
-    const timer = setTimeout(() => {
-      req.destroy();
-      reject(new Error('Request timeout'));
-    }, REQUEST_TIMEOUT);
-
+    const timer = setTimeout(() => { req.destroy(); reject(new Error('Request timeout')); }, REQUEST_TIMEOUT);
     req.on('data', (chunk) => {
       size += chunk.length;
-      if (size > MAX_BODY_SIZE) {
-        clearTimeout(timer);
-        req.destroy();
-        reject(new Error('Request body too large'));
-        return;
-      }
+      if (size > MAX_BODY_SIZE) { clearTimeout(timer); req.destroy(); reject(new Error('Request body too large')); return; }
       body += chunk;
     });
-
-    req.on('end', () => {
-      clearTimeout(timer);
-      resolve(body);
-    });
-
-    req.on('error', (err) => {
-      clearTimeout(timer);
-      reject(err);
-    });
+    req.on('end', () => { clearTimeout(timer); resolve(body); });
+    req.on('error', (err) => { clearTimeout(timer); reject(err); });
   });
 }
 
@@ -125,7 +180,7 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // API: config
+  // API: config (boards + settings)
   if (url.pathname === '/api/config' && req.method === 'GET') {
     jsonResponse(res, 200, configStore.get());
     return;
@@ -135,12 +190,28 @@ const server = http.createServer(async (req, res) => {
       const body = await readBody(req);
       const parsed = JSON.parse(body);
       const error = configStore.validate(parsed);
-      if (error) {
-        jsonResponse(res, 400, { error });
-        return;
-      }
+      if (error) { jsonResponse(res, 400, { error }); return; }
       configStore.set(parsed);
       jsonResponse(res, 200, { ok: true });
+    } catch (e) {
+      jsonResponse(res, 400, { error: e.message });
+    }
+    return;
+  }
+
+  // API: settings (read effective settings + update)
+  if (url.pathname === '/api/settings' && req.method === 'GET') {
+    jsonResponse(res, 200, configStore.getSettings());
+    return;
+  }
+  if (url.pathname === '/api/settings' && req.method === 'POST') {
+    try {
+      const body = await readBody(req);
+      const parsed = JSON.parse(body);
+      const error = configStore.validateSettings(parsed);
+      if (error) { jsonResponse(res, 400, { error }); return; }
+      const updated = configStore.updateSettings(parsed);
+      jsonResponse(res, 200, { ok: true, settings: updated });
     } catch (e) {
       jsonResponse(res, 400, { error: e.message });
     }
@@ -184,12 +255,18 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // API: status
+  // API: status (full runtime info)
   if (url.pathname === '/api/status') {
     const status = cueEngine.getStatus();
-    status.midiDevice = MIDI_DEVICE;
-    status.midiChannel = MIDI_CHANNEL + 1;
+    const settings = configStore.getSettings();
+    status.midiDevice = midiListener.device;
+    status.midiChannel = midiListener.channel + 1;
+    status.midiConnected = midiListener.running && midiListener.stream !== null;
+    status.qlcUrl = qlcBridge.url;
+    status.qlcEnabled = settings.qlcEnabled;
     status.version = require('./package.json').version;
+    status.port = HTTP_PORT;
+    status.videoDir = VIDEO_DIR;
     jsonResponse(res, 200, status);
     return;
   }
@@ -218,29 +295,22 @@ const server = http.createServer(async (req, res) => {
 const wss = new WebSocketServer({ server });
 wss.on('connection', ws => cueEngine.addClient(ws));
 
-// ─── Wire up MIDI → CueEngine ─────────────────────────────────
-midiListener.on('program-change', pc => cueEngine.trigger(pc));
-midiListener.on('connected', (dev, ch) => log.info(`MIDI listening on ${dev} (channel ${ch + 1})`));
-midiListener.on('waiting', dev => log.warn(`MIDI device ${dev} not found, retrying...`));
-midiListener.on('disconnected', dev => log.warn(`MIDI device ${dev} disconnected, retrying...`));
-
-// ─── Wire up QLC+ logging ──────────────────────────────────────
-qlcBridge.on('connected', () => log.info('QLC+ connected'));
-qlcBridge.on('disconnected', () => log.warn('QLC+ disconnected'));
-qlcBridge.on('functions-list', fns => {
-  log.info('QLC+ functions:');
-  fns.forEach(f => log.info(`  ID ${f.id}: ${f.name}`));
-});
+// ─── Wire up modules ──────────────────────────────────────────
+wireUpMidi(midiListener);
+wireUpQlc(qlcBridge);
 
 // ─── Start everything ──────────────────────────────────────────
 server.listen(HTTP_PORT, '0.0.0.0', () => {
   const board = configStore.getActiveBoard();
+  const settings = configStore.getSettings();
   log.info(`CueTools v${require('./package.json').version}`);
-  log.info(`  Board: ${board?.name || 'None'} | MIDI Ch ${MIDI_CHANNEL + 1}`);
+  log.info(`  Board: ${board?.name || 'None'} | MIDI Ch ${settings.midiChannel}`);
   log.info(`  CuePlayer: http://0.0.0.0:${HTTP_PORT}/stage`);
   log.info(`  CueDeck:   http://0.0.0.0:${HTTP_PORT}/deck`);
   if (API_TOKEN) log.info('  API token auth: enabled');
 });
 
-qlcBridge.start();
+if (initialSettings.qlcEnabled) {
+  qlcBridge.start();
+}
 midiListener.start();

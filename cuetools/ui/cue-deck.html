@@ -6,34 +6,102 @@
 <title>CueDeck</title>
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
-  body{background:#0a0a0a;color:#e0e0e0;font-family:-apple-system,system-ui,sans-serif;padding:20px;max-width:600px;margin:0 auto}
-  h1{font-size:22px;font-weight:700;color:#fff;margin-bottom:4px}
-  .subtitle{font-size:13px;color:#666;margin-bottom:16px}
-  .board-bar{display:flex;gap:8px;align-items:center;margin-bottom:20px;flex-wrap:wrap}
+  body{background:#0a0a0a;color:#e0e0e0;font-family:-apple-system,system-ui,sans-serif;padding:0;margin:0}
+  .container{max-width:600px;margin:0 auto;padding:16px 20px}
+
+  /* ─── Header ─── */
+  .header{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+  h1{font-size:22px;font-weight:700;color:#fff}
+  .version{font-size:11px;color:#555;font-family:monospace}
+  .subtitle{font-size:13px;color:#666;margin-bottom:12px}
+
+  /* ─── Status bar ─── */
+  .status-bar{display:flex;gap:12px;padding:10px 14px;background:#111;border:1px solid #1e1e1e;border-radius:10px;margin-bottom:16px;flex-wrap:wrap}
+  .status-item{display:flex;align-items:center;gap:6px;font-size:12px;color:#888}
+  .status-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+  .status-dot.green{background:#4ade80;box-shadow:0 0 6px rgba(74,222,128,0.4)}
+  .status-dot.red{background:#f87171;box-shadow:0 0 6px rgba(248,113,113,0.4)}
+  .status-dot.amber{background:#fbbf24;box-shadow:0 0 6px rgba(251,191,36,0.4)}
+  .status-dot.off{background:#333}
+  .status-value{color:#ccc;font-family:monospace}
+
+  /* ─── Tabs ─── */
+  .tabs{display:flex;gap:0;margin-bottom:20px;border-bottom:1px solid #222}
+  .tab{flex:1;padding:12px 16px;background:transparent;border:none;color:#666;font-size:14px;font-weight:600;cursor:pointer;text-align:center;border-bottom:2px solid transparent;transition:all 0.15s}
+  .tab:hover{color:#aaa}
+  .tab.active{color:#fff;border-bottom-color:#4ade80}
+  .tab:focus-visible{outline:2px solid #818cf8;outline-offset:-2px}
+  .tab-panel{display:none}
+  .tab-panel.active{display:block}
+
+  /* ─── Board bar ─── */
+  .board-bar{display:flex;gap:8px;align-items:center;margin-bottom:16px;flex-wrap:wrap}
   .board-bar select{flex:1;min-width:150px;padding:10px 14px;background:#161616;border:1px solid #333;border-radius:8px;color:#fff;font-size:15px;outline:none}
   .board-bar select option{background:#161616;color:#fff}
+  .board-bar select:focus-visible{border-color:#818cf8}
   .board-actions{display:flex;gap:6px}
-  .btn{padding:8px 14px;border:1px solid #333;border-radius:8px;background:#1a1a1a;color:#ccc;font-size:13px;cursor:pointer;white-space:nowrap}
+
+  /* ─── Buttons ─── */
+  .btn{padding:8px 14px;border:1px solid #333;border-radius:8px;background:#1a1a1a;color:#ccc;font-size:13px;cursor:pointer;white-space:nowrap;transition:background 0.1s}
   .btn:hover{background:#252525}
   .btn:focus-visible{outline:2px solid #818cf8;outline-offset:2px}
   .btn:active{background:#333}
   .btn-sm{padding:6px 10px;font-size:12px}
   .btn-green{border-color:rgba(74,222,128,0.3);color:#4ade80;background:rgba(74,222,128,0.08)}
+  .btn-green:hover{background:rgba(74,222,128,0.15)}
   .btn-blue{border-color:rgba(129,140,248,0.3);color:#818cf8;background:rgba(129,140,248,0.08)}
+  .btn-blue:hover{background:rgba(129,140,248,0.15)}
   .btn-red{border-color:rgba(248,113,113,0.3);color:#f87171;background:rgba(248,113,113,0.08)}
+  .btn-red:hover{background:rgba(248,113,113,0.15)}
   .btn-amber{border-color:rgba(251,191,36,0.3);color:#fbbf24;background:rgba(251,191,36,0.08)}
-  .active-badge{display:inline-block;padding:3px 8px;border-radius:6px;font-size:11px;font-weight:600;background:rgba(74,222,128,0.15);color:#4ade80;margin-left:8px}
-  .cue{background:#161616;border:1px solid #222;border-radius:12px;padding:14px;margin-bottom:8px;display:flex;align-items:center;gap:12px}
+  .btn-amber:hover{background:rgba(251,191,36,0.15)}
+
+  /* ─── Cue list ─── */
+  .cue{background:#161616;border:1px solid #222;border-radius:12px;padding:14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;transition:border-color 0.15s}
+  .cue:hover{border-color:#333}
   .cue-pc{background:#222;color:#4ade80;font:700 18px monospace;min-width:42px;height:42px;border-radius:8px;display:flex;align-items:center;justify-content:center}
-  .cue-info{flex:1}
+  .cue-info{flex:1;min-width:0}
   .cue-label{font-size:14px;font-weight:600;color:#fff}
-  .cue-video{font-size:11px;color:#888;font-family:monospace;margin-top:2px}
+  .cue-video{font-size:11px;color:#888;font-family:monospace;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .cue-blackout .cue-video{color:#f87171}
-  .cue-actions{display:flex;gap:6px}
+  .cue-qlc{color:#818cf8;font-size:11px;margin-left:4px}
+  .cue-actions{display:flex;gap:6px;flex-shrink:0}
   .btn-add{width:100%;padding:14px;border:2px dashed #333;border-radius:12px;background:transparent;color:#666;font-size:15px;cursor:pointer;margin-top:10px}
   .btn-add:hover{border-color:#555;color:#999}
   .btn-add:focus-visible{outline:2px solid #818cf8;outline-offset:2px}
-  .btn-add:active{border-color:#555;color:#999}
+  .empty{text-align:center;color:#555;padding:30px;font-size:14px}
+
+  /* ─── Settings ─── */
+  .settings-section{margin-bottom:24px}
+  .settings-section h3{font-size:13px;text-transform:uppercase;letter-spacing:1px;color:#666;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid #1a1a1a}
+  .setting{background:#161616;border:1px solid #222;border-radius:12px;padding:16px;margin-bottom:8px}
+  .setting-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .setting-label{flex:1}
+  .setting-name{font-size:14px;font-weight:600;color:#e0e0e0}
+  .setting-desc{font-size:11px;color:#666;margin-top:2px}
+  .setting-control{flex-shrink:0;min-width:140px}
+  .setting-control input,.setting-control select{width:100%;padding:8px 12px;background:#0a0a0a;border:1px solid #333;border-radius:8px;color:#fff;font-size:14px;outline:none;font-family:monospace}
+  .setting-control input:focus,.setting-control select:focus{border-color:#818cf8}
+  .setting-control select{font-family:-apple-system,system-ui,sans-serif}
+  .setting-wide .setting-control{min-width:0;flex:1}
+  .setting-wide .setting-row{flex-wrap:wrap}
+  .setting-wide .setting-label{width:100%;flex:unset}
+  .setting-wide .setting-control{width:100%;margin-top:8px}
+
+  /* ─── Toggle switch ─── */
+  .toggle{position:relative;width:44px;height:24px;background:#333;border-radius:12px;cursor:pointer;transition:background 0.2s;flex-shrink:0}
+  .toggle.on{background:#4ade80}
+  .toggle::after{content:'';position:absolute;top:2px;left:2px;width:20px;height:20px;background:#fff;border-radius:50%;transition:transform 0.2s}
+  .toggle.on::after{transform:translateX(20px)}
+
+  /* ─── Save bar ─── */
+  .save-bar{position:sticky;bottom:0;background:linear-gradient(transparent,#0a0a0a 20%);padding:16px 0 8px;display:none;gap:10px}
+  .save-bar.visible{display:flex}
+  .save-bar .btn{flex:1;padding:14px;text-align:center;font-size:15px;font-weight:600}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1a1a1a;border:1px solid #333;border-radius:10px;padding:10px 20px;color:#4ade80;font-size:13px;font-weight:600;opacity:0;transition:opacity 0.3s;pointer-events:none;z-index:200}
+  .toast.show{opacity:1}
+
+  /* ─── Modals ─── */
   .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:100;align-items:center;justify-content:center}
   .modal-overlay.open{display:flex}
   .modal{background:#161616;border:1px solid #333;border-radius:16px;padding:24px;width:90%;max-width:400px}
@@ -44,31 +112,156 @@
   .field input:focus-visible,.field select:focus-visible{border-color:#818cf8;outline:2px solid rgba(129,140,248,0.3);outline-offset:-2px}
   .modal-actions{display:flex;gap:10px;margin-top:20px}
   .modal-actions .btn{flex:1;text-align:center;padding:12px}
-  .divider{height:1px;background:#222;margin:16px 0}
-  .empty{text-align:center;color:#555;padding:30px;font-size:14px}
 </style>
 </head>
 <body>
 
-<header>
-  <h1>CueDeck</h1>
-  <p class="subtitle">MIDI Program Change &rarr; Video + Lighting</p>
-</header>
+<div class="container">
 
-<nav class="board-bar" aria-label="Board selection">
-  <label for="boardSelect" class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)">Select board</label>
-  <select id="boardSelect" onchange="switchBoard()" aria-label="Active board"></select>
-  <div class="board-actions" role="group" aria-label="Board actions">
-    <button class="btn btn-sm btn-green" onclick="openBoardModal()" aria-label="Add new board">+ Board</button>
-    <button class="btn btn-sm btn-amber" onclick="openBoardModal(true)" aria-label="Rename current board">Rename</button>
-    <button class="btn btn-sm btn-red" onclick="deleteBoard()" aria-label="Delete current board">Delete</button>
+  <!-- Header -->
+  <header>
+    <div class="header">
+      <h1>CueDeck</h1>
+      <span class="version" id="versionLabel"></span>
+    </div>
+    <p class="subtitle">MIDI Program Change &rarr; Video + Lighting</p>
+  </header>
+
+  <!-- Live status bar -->
+  <div class="status-bar" id="statusBar" role="status" aria-live="polite" aria-label="System status">
+    <div class="status-item">
+      <span class="status-dot off" id="midiDot"></span>
+      <span>MIDI</span>
+      <span class="status-value" id="midiStatus">--</span>
+    </div>
+    <div class="status-item">
+      <span class="status-dot off" id="qlcDot"></span>
+      <span>QLC+</span>
+      <span class="status-value" id="qlcStatus">--</span>
+    </div>
+    <div class="status-item">
+      <span class="status-dot off" id="clientsDot"></span>
+      <span>Players</span>
+      <span class="status-value" id="clientsStatus">0</span>
+    </div>
   </div>
-</nav>
 
-<main>
-  <section id="cueList" aria-label="Cue list" role="list"></section>
-  <button class="btn-add" onclick="openCueModal()" aria-label="Add new cue">+ Add Cue</button>
-</main>
+  <!-- Tabs -->
+  <nav class="tabs" role="tablist" aria-label="Dashboard sections">
+    <button class="tab active" role="tab" aria-selected="true" aria-controls="panel-cues" id="tab-cues" onclick="switchTab('cues')">Cues</button>
+    <button class="tab" role="tab" aria-selected="false" aria-controls="panel-settings" id="tab-settings" onclick="switchTab('settings')">Settings</button>
+  </nav>
+
+  <!-- ═══════════ CUES TAB ═══════════ -->
+  <div class="tab-panel active" id="panel-cues" role="tabpanel" aria-labelledby="tab-cues">
+
+    <nav class="board-bar" aria-label="Board selection">
+      <select id="boardSelect" onchange="switchBoard()" aria-label="Active board"></select>
+      <div class="board-actions" role="group" aria-label="Board actions">
+        <button class="btn btn-sm btn-green" onclick="openBoardModal()" aria-label="Add new board">+ Board</button>
+        <button class="btn btn-sm btn-amber" onclick="openBoardModal(true)" aria-label="Rename current board">Rename</button>
+        <button class="btn btn-sm btn-red" onclick="deleteBoard()" aria-label="Delete current board">Delete</button>
+      </div>
+    </nav>
+
+    <section id="cueList" aria-label="Cue list" role="list"></section>
+    <button class="btn-add" onclick="openCueModal()" aria-label="Add new cue">+ Add Cue</button>
+
+  </div>
+
+  <!-- ═══════════ SETTINGS TAB ═══════════ -->
+  <div class="tab-panel" id="panel-settings" role="tabpanel" aria-labelledby="tab-settings">
+
+    <div class="settings-section">
+      <h3>MIDI</h3>
+      <div class="setting">
+        <div class="setting-row">
+          <div class="setting-label">
+            <div class="setting-name">MIDI Channel</div>
+            <div class="setting-desc">Which MIDI channel to listen on (1-16)</div>
+          </div>
+          <div class="setting-control">
+            <select id="setMidiChannel" onchange="markSettingsDirty()" aria-label="MIDI channel">
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="setting setting-wide">
+        <div class="setting-row">
+          <div class="setting-label">
+            <div class="setting-name">MIDI Device</div>
+            <div class="setting-desc">Path to the MIDI input device file</div>
+          </div>
+          <div class="setting-control">
+            <input type="text" id="setMidiDevice" onchange="markSettingsDirty()" aria-label="MIDI device path" spellcheck="false">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <h3>Lighting (QLC+)</h3>
+      <div class="setting">
+        <div class="setting-row">
+          <div class="setting-label">
+            <div class="setting-name">QLC+ Enabled</div>
+            <div class="setting-desc">Connect to QLC+ for lighting control</div>
+          </div>
+          <div class="setting-control" style="min-width:auto">
+            <div class="toggle" id="setQlcEnabled" onclick="toggleQlc()" role="switch" aria-checked="true" aria-label="QLC+ enabled" tabindex="0"></div>
+          </div>
+        </div>
+      </div>
+      <div class="setting setting-wide">
+        <div class="setting-row">
+          <div class="setting-label">
+            <div class="setting-name">QLC+ WebSocket URL</div>
+            <div class="setting-desc">Address of the QLC+ web API</div>
+          </div>
+          <div class="setting-control">
+            <input type="text" id="setQlcUrl" onchange="markSettingsDirty()" aria-label="QLC+ WebSocket URL" spellcheck="false">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <h3>System</h3>
+      <div class="setting">
+        <div class="setting-row">
+          <div class="setting-label">
+            <div class="setting-name">Server Port</div>
+            <div class="setting-desc">HTTP/WebSocket port (requires restart)</div>
+          </div>
+          <div class="setting-control">
+            <input type="text" id="setPort" disabled aria-label="Server port">
+          </div>
+        </div>
+      </div>
+      <div class="setting">
+        <div class="setting-row">
+          <div class="setting-label">
+            <div class="setting-name">Video Directory</div>
+            <div class="setting-desc">Where video files are stored</div>
+          </div>
+          <div class="setting-control">
+            <input type="text" id="setVideoDir" disabled aria-label="Video directory">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sticky save bar -->
+    <div class="save-bar" id="saveBar">
+      <button class="btn" onclick="cancelSettings()">Cancel</button>
+      <button class="btn btn-green" onclick="saveSettings()">Save Settings</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- Toast notification -->
+<div class="toast" id="toast"></div>
 
 <!-- Cue Modal -->
 <div class="modal-overlay" id="cueModal" role="dialog" aria-modal="true" aria-labelledby="cueModalTitle">
@@ -113,18 +306,97 @@
 </div>
 
 <script>
-let config = { activeBoard: 'default', boards: {} };
+// ─── State ──────────────────────────────────────────────────────
+let config = { activeBoard: 'default', settings: {}, boards: {} };
 let videos = [];
+let serverStatus = {};
 let editingPC = null;
 let renamingBoard = false;
+let settingsDirty = false;
+let originalSettings = {};
+let statusTimer = null;
 
+// ─── Init ───────────────────────────────────────────────────────
 async function load() {
-  config = await (await fetch('/api/config')).json();
-  videos = await (await fetch('/api/videos')).json();
+  const [cfgRes, vidRes, statusRes] = await Promise.all([
+    fetch('/api/config'), fetch('/api/videos'), fetch('/api/status')
+  ]);
+  config = await cfgRes.json();
+  videos = await vidRes.json();
+  serverStatus = await statusRes.json();
+
+  // Ensure settings exists
+  if (!config.settings) config.settings = {};
+
   renderBoardSelect();
   renderCues();
+  renderSettings();
+  renderStatus();
+
+  document.getElementById('versionLabel').textContent = 'v' + (serverStatus.version || '?');
+
+  // Poll status every 3 seconds
+  if (statusTimer) clearInterval(statusTimer);
+  statusTimer = setInterval(refreshStatus, 3000);
 }
 
+async function refreshStatus() {
+  try {
+    const res = await fetch('/api/status');
+    serverStatus = await res.json();
+    renderStatus();
+  } catch { /* offline */ }
+}
+
+// ─── Status rendering ───────────────────────────────────────────
+function renderStatus() {
+  const s = serverStatus;
+
+  // MIDI
+  const midiDot = document.getElementById('midiDot');
+  const midiLabel = document.getElementById('midiStatus');
+  if (s.midiConnected) {
+    midiDot.className = 'status-dot green';
+    midiLabel.textContent = 'Ch ' + s.midiChannel;
+  } else {
+    midiDot.className = 'status-dot amber';
+    midiLabel.textContent = 'Waiting';
+  }
+
+  // QLC+
+  const qlcDot = document.getElementById('qlcDot');
+  const qlcLabel = document.getElementById('qlcStatus');
+  if (!s.qlcEnabled) {
+    qlcDot.className = 'status-dot off';
+    qlcLabel.textContent = 'Off';
+  } else if (s.qlcConnected) {
+    qlcDot.className = 'status-dot green';
+    qlcLabel.textContent = 'Connected';
+  } else {
+    qlcDot.className = 'status-dot red';
+    qlcLabel.textContent = 'Disconnected';
+  }
+
+  // Players
+  const clientsDot = document.getElementById('clientsDot');
+  const clientsLabel = document.getElementById('clientsStatus');
+  clientsLabel.textContent = s.connectedClients || 0;
+  clientsDot.className = 'status-dot ' + (s.connectedClients > 0 ? 'green' : 'off');
+}
+
+// ─── Tabs ───────────────────────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => {
+    const active = t.id === 'tab-' + name;
+    t.classList.toggle('active', active);
+    t.setAttribute('aria-selected', active);
+  });
+  document.querySelectorAll('.tab-panel').forEach(p => {
+    p.classList.toggle('active', p.id === 'panel-' + name);
+  });
+}
+
+// ─── Board select ───────────────────────────────────────────────
 function renderBoardSelect() {
   const sel = document.getElementById('boardSelect');
   sel.innerHTML = Object.entries(config.boards).map(([id, b]) =>
@@ -132,6 +404,7 @@ function renderBoardSelect() {
   ).join('');
 }
 
+// ─── Cue list ───────────────────────────────────────────────────
 function renderCues() {
   const list = document.getElementById('cueList');
   const board = config.boards[config.activeBoard];
@@ -144,8 +417,8 @@ function renderCues() {
     <div class="cue ${!cue.video ? 'cue-blackout' : ''}" role="listitem" aria-label="Cue ${pc}: ${cue.label || 'Untitled'}">
       <div class="cue-pc" aria-label="Program change ${pc}">${pc}</div>
       <div class="cue-info">
-        <div class="cue-label">${cue.label || 'Untitled'}${cue.qlcFunction ? ' <span style="color:#818cf8;font-size:11px">QLC:' + cue.qlcFunction + '</span>' : ''}</div>
-        <div class="cue-video">${cue.video || 'Blackout'}</div>
+        <div class="cue-label">${esc(cue.label || 'Untitled')}${cue.qlcFunction != null ? '<span class="cue-qlc">QLC:' + cue.qlcFunction + '</span>' : ''}</div>
+        <div class="cue-video">${esc(cue.video || 'Blackout')}</div>
       </div>
       <div class="cue-actions" role="group" aria-label="Actions for cue ${pc}">
         <button class="btn btn-sm btn-blue" onclick="testCue(${pc})" aria-label="Test cue ${pc}">Test</button>
@@ -156,8 +429,101 @@ function renderCues() {
   `).join('');
 }
 
-// ─── Board Management ───────────────────────────────────────────
+function esc(str) {
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
 
+// ─── Settings rendering ─────────────────────────────────────────
+function renderSettings() {
+  const s = config.settings || {};
+  const defaults = { midiChannel: 15, midiDevice: '/dev/snd/midiC1D0', qlcUrl: 'ws://localhost:9999/qlcplusWS', qlcEnabled: true };
+  const effective = { ...defaults, ...s };
+
+  // MIDI Channel dropdown
+  const chSel = document.getElementById('setMidiChannel');
+  chSel.innerHTML = '';
+  for (let i = 1; i <= 16; i++) {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = 'Channel ' + i;
+    if (i === effective.midiChannel) opt.selected = true;
+    chSel.appendChild(opt);
+  }
+
+  document.getElementById('setMidiDevice').value = effective.midiDevice;
+  document.getElementById('setQlcUrl').value = effective.qlcUrl;
+
+  // QLC toggle
+  const toggle = document.getElementById('setQlcEnabled');
+  toggle.classList.toggle('on', effective.qlcEnabled);
+  toggle.setAttribute('aria-checked', effective.qlcEnabled);
+
+  // Read-only system fields
+  document.getElementById('setPort').value = serverStatus.port || '3030';
+  document.getElementById('setVideoDir').value = serverStatus.videoDir || '';
+
+  // Store original for cancel
+  originalSettings = { ...effective };
+  settingsDirty = false;
+  document.getElementById('saveBar').classList.remove('visible');
+}
+
+function markSettingsDirty() {
+  settingsDirty = true;
+  document.getElementById('saveBar').classList.add('visible');
+}
+
+function toggleQlc() {
+  const toggle = document.getElementById('setQlcEnabled');
+  const isOn = toggle.classList.toggle('on');
+  toggle.setAttribute('aria-checked', isOn);
+  markSettingsDirty();
+}
+
+function cancelSettings() {
+  renderSettings();
+}
+
+async function saveSettings() {
+  const newSettings = {
+    midiChannel: parseInt(document.getElementById('setMidiChannel').value, 10),
+    midiDevice: document.getElementById('setMidiDevice').value.trim(),
+    qlcUrl: document.getElementById('setQlcUrl').value.trim(),
+    qlcEnabled: document.getElementById('setQlcEnabled').classList.contains('on')
+  };
+
+  try {
+    const res = await fetch('/api/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newSettings)
+    });
+    const data = await res.json();
+    if (!res.ok) { showToast('Error: ' + (data.error || 'Save failed'), true); return; }
+
+    config.settings = data.settings || newSettings;
+    settingsDirty = false;
+    document.getElementById('saveBar').classList.remove('visible');
+    originalSettings = { ...newSettings };
+    showToast('Settings saved');
+    refreshStatus();
+  } catch (e) {
+    showToast('Error: ' + e.message, true);
+  }
+}
+
+// ─── Toast ──────────────────────────────────────────────────────
+function showToast(msg, isError) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.style.color = isError ? '#f87171' : '#4ade80';
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2500);
+}
+
+// ─── Board management ───────────────────────────────────────────
 async function switchBoard() {
   const boardId = document.getElementById('boardSelect').value;
   await fetch('/api/board', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ boardId }) });
@@ -174,22 +540,18 @@ function openBoardModal(rename) {
   setTimeout(() => document.getElementById('boardName').focus(), 100);
 }
 
-function closeBoardModal() {
-  document.getElementById('boardModal').classList.remove('open');
-}
+function closeBoardModal() { document.getElementById('boardModal').classList.remove('open'); }
 
 async function saveBoard() {
   const name = document.getElementById('boardName').value.trim();
   if (!name) return;
-
   if (renamingBoard) {
     config.boards[config.activeBoard].name = name;
   } else {
-    const id = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+$/,'');
+    const id = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+$/, '');
     config.boards[id] = { name, cues: {} };
     config.activeBoard = id;
   }
-
   await fetch('/api/config', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(config) });
   closeBoardModal();
   renderBoardSelect();
@@ -201,7 +563,6 @@ async function deleteBoard() {
   if (ids.length <= 1) { alert('Cannot delete the last board.'); return; }
   const name = config.boards[config.activeBoard]?.name;
   if (!confirm(`Delete "${name}" and all its cues?`)) return;
-
   delete config.boards[config.activeBoard];
   config.activeBoard = Object.keys(config.boards)[0];
   await fetch('/api/config', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(config) });
@@ -209,41 +570,30 @@ async function deleteBoard() {
   renderCues();
 }
 
-// ─── Cue Management ─────────────────────────────────────────────
-
+// ─── Cue management ─────────────────────────────────────────────
 function openCueModal(pc) {
   editingPC = pc !== undefined ? pc : null;
-  const modal = document.getElementById('cueModal');
   document.getElementById('cueModalTitle').textContent = editingPC !== null ? 'Edit Cue' : 'Add Cue';
   const pcInput = document.getElementById('editPC');
   const videoSelect = document.getElementById('editVideo');
   const qlcInput = document.getElementById('editQlc');
-
-  videoSelect.innerHTML = '<option value="">— Blackout —</option>' + videos.map(v => `<option value="${v}">${v}</option>`).join('');
-
+  videoSelect.innerHTML = '<option value="">— Blackout —</option>' + videos.map(v => `<option value="${esc(v)}">${esc(v)}</option>`).join('');
   if (editingPC !== null) {
     const cue = config.boards[config.activeBoard].cues[String(editingPC)];
-    pcInput.value = editingPC;
-    pcInput.disabled = true;
+    pcInput.value = editingPC; pcInput.disabled = true;
     document.getElementById('editLabel').value = cue?.label || '';
     videoSelect.value = cue?.video || '';
     qlcInput.value = cue?.qlcFunction ?? '';
   } else {
-    pcInput.value = '';
-    pcInput.disabled = false;
+    pcInput.value = ''; pcInput.disabled = false;
     document.getElementById('editLabel').value = '';
-    videoSelect.value = '';
-    qlcInput.value = '';
+    videoSelect.value = ''; qlcInput.value = '';
   }
-
-  modal.classList.add('open');
+  document.getElementById('cueModal').classList.add('open');
   setTimeout(() => (editingPC !== null ? document.getElementById('editLabel') : pcInput).focus(), 100);
 }
 
-function closeCueModal() {
-  document.getElementById('cueModal').classList.remove('open');
-  editingPC = null;
-}
+function closeCueModal() { document.getElementById('cueModal').classList.remove('open'); editingPC = null; }
 
 async function saveCue() {
   const pc = document.getElementById('editPC').value;
@@ -252,7 +602,6 @@ async function saveCue() {
   const qlcRaw = document.getElementById('editQlc').value;
   const qlcFunction = qlcRaw !== '' ? parseInt(qlcRaw, 10) : null;
   if (pc === '') return;
-
   config.boards[config.activeBoard].cues[String(pc)] = { video, label, qlcFunction };
   await fetch('/api/config', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(config) });
   closeCueModal();
@@ -267,12 +616,13 @@ async function deleteCue(pc) {
 
 async function testCue(pc) { await fetch(`/api/trigger/${pc}`); }
 
-// ─── Keyboard: close modals on Escape ──────────────────────────
+// ─── Keyboard ───────────────────────────────────────────────────
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') {
-    closeCueModal();
-    closeBoardModal();
-  }
+  if (e.key === 'Escape') { closeCueModal(); closeBoardModal(); }
+});
+// Toggle switch keyboard support
+document.getElementById('setQlcEnabled').addEventListener('keydown', (e) => {
+  if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); toggleQlc(); }
 });
 
 load();

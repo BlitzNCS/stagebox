@@ -5,8 +5,16 @@ const createLogger = require('./logger');
 
 const log = createLogger('config');
 
+const DEFAULT_SETTINGS = {
+  midiChannel: 15,
+  midiDevice: '/dev/snd/midiC1D0',
+  qlcUrl: 'ws://localhost:9999/qlcplusWS',
+  qlcEnabled: true
+};
+
 const DEFAULT_CONFIG = {
   activeBoard: 'default',
+  settings: { ...DEFAULT_SETTINGS },
   boards: {
     default: {
       name: 'Default',
@@ -32,11 +40,17 @@ class ConfigStore extends EventEmitter {
         log.info('Migrating legacy flat-cue config to boards format');
         this.config = {
           activeBoard: 'default',
+          settings: { ...DEFAULT_SETTINGS },
           boards: { default: { name: 'Default', cues: raw.cues } }
         };
         this.save();
       } else {
         this.config = raw;
+        // Ensure settings section exists (migration from v2.0 configs)
+        if (!this.config.settings) {
+          this.config.settings = { ...DEFAULT_SETTINGS };
+          this.save();
+        }
       }
     } catch (err) {
       log.warn(`Config load failed (${err.message}), using defaults`);
@@ -57,12 +71,40 @@ class ConfigStore extends EventEmitter {
     return this.config;
   }
 
+  getSettings() {
+    return { ...DEFAULT_SETTINGS, ...this.config.settings };
+  }
+
+  updateSettings(newSettings) {
+    const prev = this.getSettings();
+    this.config.settings = { ...this.config.settings, ...newSettings };
+    this.save();
+    const next = this.getSettings();
+
+    // Emit granular change events so the server can restart only what changed
+    if (prev.midiChannel !== next.midiChannel || prev.midiDevice !== next.midiDevice) {
+      this.emit('midi-changed', next);
+    }
+    if (prev.qlcUrl !== next.qlcUrl || prev.qlcEnabled !== next.qlcEnabled) {
+      this.emit('qlc-changed', next);
+    }
+
+    this.emit('settings-changed', next);
+    return next;
+  }
+
   validate(cfg) {
     if (!cfg || typeof cfg !== 'object') return 'Config must be an object';
     if (typeof cfg.activeBoard !== 'string' || !cfg.activeBoard) return 'activeBoard must be a non-empty string';
     if (!cfg.boards || typeof cfg.boards !== 'object') return 'boards must be an object';
     if (Object.keys(cfg.boards).length === 0) return 'At least one board is required';
     if (!cfg.boards[cfg.activeBoard]) return `activeBoard "${cfg.activeBoard}" does not exist in boards`;
+
+    // Validate settings if present
+    if (cfg.settings !== undefined) {
+      const err = this.validateSettings(cfg.settings);
+      if (err) return err;
+    }
 
     for (const [boardId, board] of Object.entries(cfg.boards)) {
       if (!board || typeof board !== 'object') return `Board "${boardId}" must be an object`;
@@ -81,6 +123,25 @@ class ConfigStore extends EventEmitter {
       }
     }
 
+    return null;
+  }
+
+  validateSettings(s) {
+    if (!s || typeof s !== 'object') return 'settings must be an object';
+    if (s.midiChannel !== undefined) {
+      if (typeof s.midiChannel !== 'number' || s.midiChannel < 1 || s.midiChannel > 16 || !Number.isInteger(s.midiChannel)) {
+        return 'midiChannel must be an integer 1-16';
+      }
+    }
+    if (s.midiDevice !== undefined && typeof s.midiDevice !== 'string') {
+      return 'midiDevice must be a string';
+    }
+    if (s.qlcUrl !== undefined && typeof s.qlcUrl !== 'string') {
+      return 'qlcUrl must be a string';
+    }
+    if (s.qlcEnabled !== undefined && typeof s.qlcEnabled !== 'boolean') {
+      return 'qlcEnabled must be a boolean';
+    }
     return null;
   }
 
@@ -108,3 +169,4 @@ class ConfigStore extends EventEmitter {
 }
 
 module.exports = ConfigStore;
+module.exports.DEFAULT_SETTINGS = DEFAULT_SETTINGS;
